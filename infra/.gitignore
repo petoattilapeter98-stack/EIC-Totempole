@@ -1,0 +1,28 @@
+# Provider plugins and module cache
+.terraform/
+.terraform.tfstate.lock.info
+
+# State should live in S3, never on disk
+*.tfstate
+*.tfstate.*
+
+# Saved plans are binary artifacts holding fully-resolved values.
+# Note "tfplan" with no extension is the common default and is NOT matched
+# by *.tfplan - both patterns are needed.
+tfplan
+*.tfplan
+plan.out
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Local variable overrides
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# NOTE: .terraform.lock.hcl is intentionally NOT ignored - it pins provider
+# versions and must be committed for reproducible applies.

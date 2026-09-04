@@ -124,10 +124,27 @@ Each maps to spec acceptance scenarios and success criteria. Scenarios 1–5 are
 
 ## Deployment
 
-```bash
-npm run build          # → dist/
-aws s3 sync dist/ s3://<bucket>/ --delete
-aws cloudfront create-invalidation --distribution-id <id> --paths "/*"
-```
+The infrastructure is Terraform at the **repo root**, in `infra/` — a sibling of
+this app directory. **[`infra/README.md`](../../../infra/README.md) is the source
+of truth for deploy commands**; the summary below exists so this guide is not
+misleading, not so it can be copy-pasted in isolation.
 
-Static objects only — no SSR, no Lambda, no API origin. Serve `index.html` for the root; set a long `max-age` on `/assets/*` (content-hashed by Vite) and on `/fonts/*` (stable paths that effectively never change).
+Deployment is a two-step upload, not a single sync, because the two halves need
+opposite cache headers:
+
+| Path | `Cache-Control` | Why |
+|---|---|---|
+| `/assets/*`, `/fonts/*` | `public,max-age=31536000,immutable` | Vite content-hashes assets; font paths are stable |
+| `index.html` | `no-cache,must-revalidate` | The kiosk must never boot an old bundle |
+
+> ⚠️ A plain `aws s3 sync dist/ s3://<bucket>/` breaks this: it would upload
+> `index.html` with a long TTL, and the kiosk could then keep serving a stale
+> build indefinitely. Always upload `index.html` separately, **after** the sync
+> — the sync's `--delete` would otherwise remove it.
+
+Because `index.html` is never cached at the edge, a routine deploy needs **no
+CloudFront invalidation**. Invalidate only when replacing a file under `/fonts/`.
+
+Live dev environment: <https://dev.totempole.wisebeers.com>
+
+Static objects only — no SSR, no Lambda, no API origin.
