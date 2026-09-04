@@ -1,0 +1,80 @@
+.nav {
+  width: 100%;
+}
+
+.tablist {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* Constitution III: at least 16px between adjacent touch targets. */
+  gap: var(--touch-gap-min);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+
+  /* Constitution III: the element's own box is the 64px target, formed by
+     min-height + padding — never a transparent overlay. */
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: var(--space-4) var(--space-5);
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text);
+
+  transition: background var(--transition-touch), transform var(--transition-touch),
+    box-shadow var(--transition-touch);
+}
+
+.tab:active {
+  transform: scale(0.97);
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: var(--accent-color);
+}
+
+.label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * Active state is a filled dark surface, not a hue change — colour is never the
+ * only channel carrying meaning, and aria-selected carries it non-visually too
+ * (research.md R10, Constitution VII).
+ */
+.tabActive {
+  background: var(--color-active-bg);
+  color: var(--color-active-fg);
+  border-color: var(--color-active-bg);
+  box-shadow: var(--shadow-active);
+}
+
+.tabActive .icon {
+  color: var(--color-active-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab {
+    transition: none;
+  }
+  .tab:active {
+    transform: none;
+  }
+}

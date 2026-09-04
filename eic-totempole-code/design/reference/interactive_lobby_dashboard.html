@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexus HQ - Executive Lobby Kiosk</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;700&display=swap');
+    
+    * {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Bold Typographic Emphasis Inspired by 'PP Mori' */
+    .font-mori {
+      font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.04em;
+    }
+
+    /* Tactile Touch Motion */
+    .touch-btn {
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .touch-btn:active {
+      transform: scale(0.97);
+    }
+
+    /* Crisp White Space & Minimal Card Surfaces */
+    .executive-card {
+      background: #ffffff;
+      box-shadow: 0 20px 45px -15px rgba(15, 23, 42, 0.08), 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+
+    .light-executive-bg {
+      background: #f8fafc;
+    }
+
+    .tab-active {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+      box-shadow: 0 12px 30px -8px rgba(15, 23, 42, 0.3);
+    }
+
+    .tab-active i {
+      color: #38bdf8 !important;
+    }
+
+    /* 3D Floating Graphic Animation */
+    @keyframes floatGraphic {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(3deg); }
+    }
+
+    .animate-float {
+      animation: floatGraphic 6s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="light-executive-bg text-slate-900 min-h-screen h-screen flex flex-col justify-between p-10 overflow-hidden select-none">
+
+  <!-- ==================== TOP HEADER BAR ==================== -->
+  <header class="flex justify-between items-center bg-white/90 backdrop-blur-md border border-slate-200/90 rounded-3xl px-8 py-4 shadow-sm z-10 shrink-0">
+    <!-- Brand Info -->
+    <div class="flex items-center space-x-4">
+      <div class="w-12 h-12 bg-slate-900 rounded-2xl flex items-center justify-center font-black text-2xl tracking-tight text-white shadow-md shadow-slate-900/10">
+        N
+      </div>
+      <div>
+        <h1 class="text-xl font-black tracking-tight text-slate-900 flex items-center gap-2 font-mori">
+          NEXUS HQ
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        </h1>
+        <p class="text-xs text-slate-400 font-medium">Executive Surface Hub Kiosk</p>
+      </div>
+    </div>
+
+    <!-- Live Status & Language Toggle -->
+    <div class="flex items-center space-x-4 text-slate-700">
+      <!-- Location & Weather -->
+      <div class="flex items-center space-x-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200/70">
+        <i data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
+        <div class="flex flex-col">
+          <span class="text-base font-bold leading-none text-slate-900 font-mori">22°C</span>
+          <span class="text-[10px] text-slate-400 font-medium">Budapest</span>
+        </div>
+      </div>
+
+      <!-- Live Clock -->
+      <div class="flex items-center space-x-3 bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200/70">
+        <i data-lucide="clock" class="w-5 h-5 text-blue-600"></i>
+        <div class="flex flex-col">
+          <span id="liveClock" class="text-base font-bold tracking-wider leading-none text-slate-900 font-mori">14:00:00</span>
+          <span id="liveDate" class="text-[10px] text-slate-400 font-medium">Thu, Sep 3</span>
+        </div>
+      </div>
+
+      <!-- Language Selector -->
+      <button onclick="toggleLanguage()" id="langBtn" class="flex items-center space-x-2 bg-slate-900 hover:bg-slate-800 active:scale-95 transition px-4 py-2.5 rounded-2xl text-white font-semibold text-sm shadow-md">
+        <i data-lucide="globe" class="w-4 h-4 text-slate-300"></i>
+        <span id="langText" class="font-mori">EN / HU</span>
+      </button>
+    </div>
+  </header>
+
+
+  <!-- ==================== BOLD TYPOGRAPHIC HERO SECTION WITH VIBRANT 3D ELEMENTS ==================== -->
+  <section class="my-6 relative bg-white border border-slate-200/80 rounded-[36px] px-12 py-10 flex items-center justify-between shadow-xl overflow-hidden shrink-0">
+    
+    <!-- Bold Typography Anchor -->
+    <div class="max-w-3xl z-10">
+      <div class="inline-flex items-center space-x-2 bg-blue-50 border border-blue-200/80 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold tracking-wider uppercase mb-4">
+        <i data-lucide="sparkles" class="w-4 h-4 text-blue-600"></i>
+        <span>VIP Executive Summit</span>
+      </div>
+
+      <h2 class="text-5xl lg:text-6xl font-black text-slate-900 leading-[1.05] tracking-tight mb-3 font-mori">
+        Welcome to<br>Nexus Headquarters
+      </h2>
+      <p class="text-xl text-slate-500 font-normal max-w-2xl leading-relaxed">
+        Delighted to host the <span class="text-slate-900 font-bold underline decoration-blue-500/40 underline-offset-4">Global Executive Board</span> for today’s strategic summit.
+      </p>
+    </div>
+
+    <!-- Vibrant Interactive 3D Illustration Element -->
+    <div class="relative w-64 h-56 flex items-center justify-center shrink-0 animate-float">
+      <svg class="w-full h-full drop-shadow-2xl" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#4f46e5" />
+          </linearGradient>
+          <linearGradient id="grad2" x1="0%" y1="100%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#f59e0b" />
+            <stop offset="100%" stop-color="#ec4899" />
+          </linearGradient>
+          <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.15" />
+          </filter>
+        </defs>
+        <!-- 3D Geometrics -->
+        <rect x="35" y="35" width="110" height="110" rx="32" fill="url(#grad1)" filter="url(#shadow)" transform="rotate(-8 90 90)" />
+        <circle cx="140" cy="60" r="32" fill="url(#grad2)" filter="url(#shadow)" />
+        <rect x="75" y="85" width="70" height="70" rx="20" fill="#ffffff" filter="url(#shadow)" transform="rotate(12 110 120)" />
+      </svg>
+    </div>
+
+  </section>
+
+
+  <!-- ==================== HORIZONTAL TAB NAVIGATION BAR ==================== -->
+  <nav class="grid grid-cols-6 gap-3 mb-4 shrink-0">
+    
+    <button id="tab-map" onclick="switchTab('map')" class="touch-btn tab-active flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="map-pin" class="w-4 h-4 text-emerald-600"></i>
+      <span class="truncate">Campus Map</span>
+    </button>
+
+    <button id="tab-checkin" onclick="switchTab('checkin')" class="touch-btn flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="user-check" class="w-4 h-4 text-blue-600"></i>
+      <span class="truncate">Express Check-In</span>
+    </button>
+
+    <button id="tab-agenda" onclick="switchTab('agenda')" class="touch-btn flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="calendar" class="w-4 h-4 text-violet-600"></i>
+      <span class="truncate">Board Agenda</span>
+    </button>
+
+    <button id="tab-transit" onclick="switchTab('transit')" class="touch-btn flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="navigation" class="w-4 h-4 text-amber-600"></i>
+      <span class="truncate">Local Transit</span>
+    </button>
+
+    <button id="tab-innovation" onclick="switchTab('innovation')" class="touch-btn flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="sparkles" class="w-4 h-4 text-cyan-600"></i>
+      <span class="truncate">Highlights</span>
+    </button>
+
+    <button id="tab-wifi" onclick="switchTab('wifi')" class="touch-btn flex items-center justify-center space-x-2 bg-white border border-slate-200/90 rounded-2xl py-3.5 px-4 text-slate-800 hover:bg-slate-50 transition shadow-sm font-bold text-xs uppercase tracking-wider font-mori">
+      <i data-lucide="wifi" class="w-4 h-4 text-rose-600"></i>
+      <span class="truncate">Lounge & Wi-Fi</span>
+    </button>
+
+  </nav>
+
+
+  <!-- ==================== DYNAMIC INLINE CONTENT PANEL ==================== -->
+  <main class="flex-1 executive-card rounded-[32px] border border-slate-200/90 p-8 relative overflow-hidden flex flex-col justify-between shadow-xl">
+    
+    <!-- PANEL 1: MAP -->
+    <div id="content-map" class="content-panel h-full flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
+            <i data-lucide="map-pin" class="w-5 h-5 text-emerald-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Campus & Floor Plan</h3>
+            <p class="text-xs text-slate-400 font-medium">Nexus HQ • Main Tower Level 12 Overview</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-6 my-4">
+          <div class="bg-blue-50/80 border border-blue-200/80 rounded-2xl p-6 flex flex-col justify-between">
+            <span class="text-xs text-blue-700 font-extrabold uppercase tracking-wider font-mori">BOARDROOM A</span>
+            <span class="text-xl font-bold text-slate-900 my-2 font-mori">Global Executive Summit</span>
+            <span class="text-xs text-slate-500 font-medium">Occupied • Level 12 East Wing</span>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+            <span class="text-xs text-emerald-700 font-extrabold uppercase tracking-wider font-mori">INNOVATION LAB</span>
+            <span class="text-xl font-bold text-slate-900 my-2 font-mori">Product Showcase</span>
+            <span class="text-xs text-slate-500 font-medium">Available • Level 12 North</span>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col justify-between shadow-sm">
+            <span class="text-xs text-amber-700 font-extrabold uppercase tracking-wider font-mori">EXECUTIVE LOUNGE</span>
+            <span class="text-xl font-bold text-slate-900 my-2 font-mori">Espresso & Catering Bar</span>
+            <span class="text-xs text-slate-500 font-medium">Open Access • West Wing</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+        <span class="text-sm text-slate-700 font-medium">📍 Current Location: <strong>Main Entrance Interactive Display</strong></span>
+        <span class="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full font-bold border border-emerald-200 font-mori">Elevators 20m Ahead</span>
+      </div>
+    </div>
+
+    <!-- PANEL 2: CHECK-IN -->
+    <div id="content-checkin" class="content-panel hidden h-full flex flex-col justify-between max-w-3xl">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-blue-50 border border-blue-100 rounded-xl">
+            <i data-lucide="user-check" class="w-5 h-5 text-blue-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Express Visitor Check-In</h3>
+            <p class="text-xs text-slate-400 font-medium">Instant host dispatch via Teams/Slack</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 my-4">
+          <div>
+            <label class="block text-xs text-slate-600 font-semibold mb-1.5 font-mori">YOUR FULL NAME</label>
+            <input type="text" placeholder="e.g. Sarah Jenkins" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-900 placeholder-slate-400 text-base focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="block text-xs text-slate-600 font-semibold mb-1.5 font-mori">HOST EMAIL / NAME</label>
+            <input type="text" placeholder="e.g. host@nexushq.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3.5 text-slate-900 placeholder-slate-400 text-base focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+      </div>
+
+      <button onclick="submitCheckin()" class="w-full py-4 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-2xl text-base shadow-lg transition font-mori">
+        Confirm Arrival & Print Guest Badge
+      </button>
+    </div>
+
+    <!-- PANEL 3: AGENDA -->
+    <div id="content-agenda" class="content-panel hidden h-full flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-violet-50 border border-violet-100 rounded-xl">
+            <i data-lucide="calendar" class="w-5 h-5 text-violet-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Executive Board Agenda</h3>
+            <p class="text-xs text-slate-400 font-medium">Scheduled key milestone events</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 my-4">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex justify-between items-center">
+            <div>
+              <span class="text-xs text-blue-600 font-extrabold uppercase font-mori">14:15 - 15:30</span>
+              <h4 class="text-lg font-bold text-slate-900 font-mori">Keynote: AI Strategy & Roadmap 2027</h4>
+            </div>
+            <span class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-full font-semibold text-slate-700">Boardroom A</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex justify-between items-center">
+            <div>
+              <span class="text-xs text-violet-600 font-extrabold uppercase font-mori">15:30 - 16:15</span>
+              <h4 class="text-lg font-bold text-slate-900 font-mori">Executive Networking & Refreshments</h4>
+            </div>
+            <span class="text-xs bg-white border border-slate-200 px-3 py-1.5 rounded-full font-semibold text-slate-700">VIP Sky Lounge</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 4: TRANSIT -->
+    <div id="content-transit" class="content-panel hidden h-full flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-amber-50 border border-amber-100 rounded-xl">
+            <i data-lucide="navigation" class="w-5 h-5 text-amber-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Local Transit & Shuttles</h3>
+            <p class="text-xs text-slate-400 font-medium">Live departures from Budapest HQ</p>
+          </div>
+        </div>
+
+        <div class="space-y-3 my-4">
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+              <div>
+                <h4 class="font-bold text-slate-900 font-mori">Airport Express Shuttle 100E</h4>
+                <p class="text-xs text-slate-400">Main Gate Platform 2</p>
+              </div>
+            </div>
+            <span class="text-lg font-bold text-emerald-600 font-mori">In 4 mins</span>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+              <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+              <div>
+                <h4 class="font-bold text-slate-900 font-mori">Metro Line M3 Express</h4>
+                <p class="text-xs text-slate-400">Underground Station South</p>
+              </div>
+            </div>
+            <span class="text-lg font-bold text-blue-600 font-mori">In 7 mins</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 5: HIGHLIGHTS -->
+    <div id="content-innovation" class="content-panel hidden h-full flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-cyan-50 border border-cyan-100 rounded-xl">
+            <i data-lucide="sparkles" class="w-5 h-5 text-cyan-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Company Highlights</h3>
+            <p class="text-xs text-slate-400 font-medium">Sustainability & operational telemetry</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-6 my-4">
+          <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl">
+            <span class="text-xs text-cyan-700 font-extrabold uppercase font-mori">CARBON NEUTRALITY</span>
+            <div class="text-4xl font-black text-slate-900 my-1 font-mori">94.2%</div>
+            <p class="text-xs text-slate-400 font-medium">HQ Solar Grid Active</p>
+          </div>
+          <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl">
+            <span class="text-xs text-cyan-700 font-extrabold uppercase font-mori">GLOBAL CENTERS</span>
+            <div class="text-4xl font-black text-slate-900 my-1 font-mori">12 Hubs</div>
+            <p class="text-xs text-slate-400 font-medium">Zero Latency Sync</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANEL 6: WI-FI -->
+    <div id="content-wifi" class="content-panel hidden h-full flex flex-col justify-between">
+      <div>
+        <div class="flex items-center space-x-3 mb-4">
+          <div class="p-2.5 bg-rose-50 border border-rose-100 rounded-xl">
+            <i data-lucide="wifi" class="w-5 h-5 text-rose-600"></i>
+          </div>
+          <div>
+            <h3 class="text-2xl font-black text-slate-900 font-mori">Lounge & Guest Wi-Fi</h3>
+            <p class="text-xs text-slate-400 font-medium">High-speed guest roaming</p>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 p-6 rounded-2xl text-center flex items-center justify-around my-2">
+          <div class="p-3 bg-white border border-slate-200 rounded-2xl shadow-sm">
+            <div class="w-28 h-28 bg-slate-100 rounded-xl flex items-center justify-center text-slate-500 text-[10px] text-center p-2 font-mono">
+              [ Scan Surface Hub Screen QR ]
+            </div>
+          </div>
+          <div class="text-left">
+            <p class="text-slate-800 font-bold text-lg font-mori">Network: <span class="text-rose-600">Nexus-Guest-VIP</span></p>
+            <p class="text-slate-500 text-sm mt-1">Passcode: <span class="text-slate-900 font-mono bg-white border border-slate-200 px-3 py-1 rounded-lg">Board2026!</span></p>
+            <p class="text-xs text-slate-400 mt-2">Automatic high-speed 6GHz spectrum enabled</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+
+  <!-- ==================== FOOTER BAR ==================== -->
+  <footer class="mt-4 flex justify-between items-center text-xs text-slate-400 px-2 pt-2 border-t border-slate-200/80 shrink-0">
+    <div class="flex items-center space-x-3">
+      <span class="inline-block w-2 h-2 rounded-full bg-slate-800"></span>
+      <span class="font-medium text-slate-500">Surface Hub Interactive Entrance Kiosk</span>
+    </div>
+    <div class="flex items-center space-x-6 text-slate-500 font-medium">
+      <span>Touch tab to switch view</span>
+      <span class="text-slate-300">|</span>
+      <span>Auto-Reset Timer: <strong id="resetTimer" class="text-slate-900 font-bold font-mori">60s</strong></span>
+    </div>
+  </footer>
+
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    // Initialize Lucide Icons
+    lucide.createIcons();
+
+    // Live Clock
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('liveClock').textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      document.getElementById('liveDate').textContent = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    // Auto-Reset Timer
+    let secondsLeft = 60;
+    function resetTimer() { secondsLeft = 60; }
+    document.addEventListener('touchstart', resetTimer);
+    document.addEventListener('click', resetTimer);
+
+    setInterval(() => {
+      secondsLeft--;
+      if (secondsLeft <= 0) {
+        switchTab('map');
+        secondsLeft = 60;
+      }
+      document.getElementById('resetTimer').textContent = secondsLeft + 's';
+    }, 1000);
+
+    // Dynamic Tab Switching Logic
+    const tabIds = ['map', 'checkin', 'agenda', 'transit', 'innovation', 'wifi'];
+
+    function switchTab(selectedId) {
+      tabIds.forEach(id => {
+        const tabBtn = document.getElementById(`tab-${id}`);
+        const contentPanel = document.getElementById(`content-${id}`);
+
+        if (id === selectedId) {
+          tabBtn.classList.add('tab-active');
+          contentPanel.classList.remove('hidden');
+        } else {
+          tabBtn.classList.remove('tab-active');
+          contentPanel.classList.add('hidden');
+        }
+      });
+    }
+
+    function submitCheckin() {
+      alert('Host notified via Teams/Slack! Pass printed.');
+      switchTab('map');
+    }
+
+    let isEnglish = true;
+    function toggleLanguage() {
+      isEnglish = !isEnglish;
+      document.getElementById('langText').textContent = isEnglish ? 'EN / HU' : 'HU / EN';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+/*
+ * App shell layout contract.
+ * specs/001-lobby-kiosk-shell/contracts/ui-structure.md §1
+ *
+ * Five explicit rows inside a viewport-height container. The content row is the
+ * only flexible one, so it absorbs all remaining height by construction — the
+ * page cannot overflow (spec FR-016, FR-020; Constitution II).
+ *
+ * The footer is a fifth `auto` row rather than nested inside the content row, so
+ * the countdown can never be pushed off-screen by content (spec FR-017).
+ */
+
+.shell {
+  height: 100vh;  /* fallback first */
+  height: 100dvh;
+  width: 100vw;
+
+  display: grid;
+  grid-template-rows: auto auto auto 1fr auto;
+  gap: var(--space-5);
+
+  padding: var(--space-8) var(--space-10);
+  background: var(--color-bg);
+
+  /* The real guarantee. Combined with the 1fr row's min-height below, overflow
+     is structurally impossible rather than merely unlikely. */
+  overflow: hidden;
+}
+
+.content {
+  /*
+   * REQUIRED. Grid items default to `min-height: auto`, which refuses to shrink
+   * below the content's intrinsic size — the single most common cause of a 1fr
+   * row overflowing its container (research.md R7).
+   */
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-3xl);
+  box-shadow: var(--shadow-surface);
+  padding: var(--space-8);
+}

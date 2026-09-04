@@ -1,0 +1,41 @@
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-border-soft);
+
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-active-bg);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.divider {
+  color: var(--color-border);
+}
+
+.countdown {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}

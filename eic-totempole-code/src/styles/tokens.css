@@ -1,0 +1,130 @@
+/*
+ * THE single design-token file. Components consume these custom properties;
+ * components never hard-code a hex value or a raw px size.
+ * Contract: specs/001-lobby-kiosk-shell/contracts/ui-structure.md §4
+ */
+
+:root {
+  /* ---------------------------------------------------------------
+   * Surfaces
+   * ------------------------------------------------------------- */
+  --color-bg: #f8fafc;              /* page background */
+  --color-surface: #ffffff;         /* elevated cards */
+  --color-surface-sunken: #f8fafc;  /* insets inside a surface */
+  --color-border: #e2e8f0;
+  --color-border-soft: rgba(226, 232, 240, 0.7);
+
+  /* Soft, layered elevation — matches the reference mockup's card feel */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-surface: 0 20px 45px -15px rgba(15, 23, 42, 0.08),
+                    0 1px 3px rgba(15, 23, 42, 0.03);
+  --shadow-raised: 0 24px 50px -18px rgba(15, 23, 42, 0.14),
+                   0 1px 3px rgba(15, 23, 42, 0.04);
+  --shadow-active: 0 12px 30px -8px rgba(15, 23, 42, 0.3);
+
+  /* ---------------------------------------------------------------
+   * Text & active states
+   * Contrast (WCAG AA needs 4.5:1 body / 3:1 large):
+   *   #0F172A on #F8FAFC ≈ 16.9:1  PASS AAA
+   *   #0F172A on #FFFFFF ≈ 17.9:1  PASS AAA
+   *   #64748B on #FFFFFF ≈  4.8:1  PASS AA  (muted body)
+   *   #94A3B8 on #FFFFFF ≈  2.6:1  FAILS AA — decorative/large-only, never body copy
+   *   #FFFFFF on #0F172A ≈ 17.9:1  PASS AAA (active tab)
+   * ------------------------------------------------------------- */
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+  --color-text-faint: #94a3b8;      /* large/decorative only — fails AA at body size */
+  --color-active-bg: #0f172a;
+  --color-active-fg: #ffffff;
+
+  /* ---------------------------------------------------------------
+   * Accents — CATEGORY IDENTITY ONLY (research.md R10)
+   * Body copy is always --color-text. These 600-level shades are the
+   * only ones cleared for text/essential icons on white or slate-50.
+   * The -soft variants are fills that sit BEHIND dark text.
+   * ------------------------------------------------------------- */
+  --accent-emerald: #059669;   /* ≈ 4.5:1 on #FFFFFF */
+  --accent-blue: #2563eb;      /* ≈ 5.9:1 */
+  --accent-violet: #7c3aed;    /* ≈ 6.3:1 */
+  --accent-amber: #b45309;     /* ≈ 5.1:1 — deliberately 700; amber-600 fails AA */
+  --accent-cyan: #0e7490;      /* ≈ 4.8:1 — deliberately 700; cyan-600 fails AA */
+  --accent-rose: #e11d48;      /* ≈ 4.6:1 */
+
+  --accent-emerald-soft: #ecfdf5;
+  --accent-blue-soft: #eff6ff;
+  --accent-violet-soft: #f5f3ff;
+  --accent-amber-soft: #fffbeb;
+  --accent-cyan-soft: #ecfeff;
+  --accent-rose-soft: #fff1f2;
+
+  --accent-emerald-border: #a7f3d0;
+  --accent-blue-border: #bfdbfe;
+  --accent-violet-border: #ddd6fe;
+  --accent-amber-border: #fde68a;
+  --accent-cyan-border: #a5f3fc;
+  --accent-rose-border: #fecdd3;
+
+  /* Live status indicator */
+  --color-status-live: #10b981;
+
+  /* ---------------------------------------------------------------
+   * Typography — rem scale anchored to the 16px root set in reset.css
+   * for the 1920x1280 design viewport (research.md R1)
+   * ------------------------------------------------------------- */
+  --font-display: 'Space Grotesk', 'Plus Jakarta Sans', system-ui, 'Segoe UI', sans-serif;
+  --font-body: 'Plus Jakarta Sans', system-ui, 'Segoe UI', -apple-system, sans-serif;
+
+  --text-xs: 0.75rem;      /* 12px */
+  --text-sm: 0.875rem;     /* 14px */
+  --text-base: 1rem;       /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+  --text-6xl: 3.75rem;     /* 60px */
+
+  --tracking-tight: -0.04em;
+  --tracking-wide: 0.08em;
+  --leading-tight: 1.05;
+  --leading-normal: 1.5;
+
+  /* ---------------------------------------------------------------
+   * Space
+   * ------------------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* ---------------------------------------------------------------
+   * Radius
+   * ------------------------------------------------------------- */
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2.25rem;
+  --radius-pill: 9999px;
+
+  /* ---------------------------------------------------------------
+   * Touch — Constitution Principle III, non-negotiable
+   * ------------------------------------------------------------- */
+  --touch-target-min: 4rem;   /* 64px */
+  --touch-gap-min: 1rem;      /* 16px */
+
+  /* ---------------------------------------------------------------
+   * Motion
+   * ------------------------------------------------------------- */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-pulse: 2.4s;
+  --motion-float: 6s;
+  --transition-touch: 0.22s var(--ease-out-expo);
+}

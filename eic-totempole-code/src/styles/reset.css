@@ -1,0 +1,107 @@
+/*
+ * Minimal reset + kiosk hardening (research.md R9).
+ * Each rule below maps to an observed public-kiosk failure mode.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* The rem anchor for the 1920x1280 design viewport (research.md R1).
+     The Surface Hub's 200% OS scaling already does the physical enlarging. */
+  font-size: 16px;
+
+  /* Page scroll is structurally impossible, not merely unlikely
+     (Constitution II / spec FR-020). */
+  overflow: hidden;
+  height: 100%;
+
+  /* No two-finger pan revealing white space beyond the layout. */
+  overscroll-behavior: none;
+
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--color-text);
+  background: var(--color-bg);
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* No visitor drag-selecting the headline into blue highlight.
+     Re-enable locally (user-select: text) if a tab ever shows copyable content. */
+  user-select: none;
+  -webkit-user-select: none;
+
+  /* No grey flash box on tap. */
+  -webkit-tap-highlight-color: transparent;
+
+  /* Kills the ~300ms double-tap-zoom delay: faster perceived tab switching
+     (SC-003), and no unrecoverable zoom state on a device with no keyboard. */
+  touch-action: manipulation;
+}
+
+#root {
+  height: 100%;
+  isolation: isolate;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Visible focus for keyboard users — Constitution VII requires every
+   interactive element to be keyboard-reachable even though input is touch. */
+:focus-visible {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: 3px;
+  border-radius: var(--radius-md);
+}
+
+/* Touch input should not paint a focus ring. */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Visually hidden but announced by screen readers. Used where meaning is
+   carried by a decorative element (e.g. the pulsing status dot), so the
+   meaning is never colour/animation-only — Constitution VII. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
