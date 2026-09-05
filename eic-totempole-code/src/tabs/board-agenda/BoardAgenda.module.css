@@ -1,0 +1,260 @@
+/*
+ * Fills the content region exactly. Rows flex-distribute the remaining height,
+ * so the list can never push the page into a scroll (Constitution II).
+ */
+.agenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  height: 100%;
+  min-height: 0;
+}
+
+/* ---------------- Header ---------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 0 0 auto;
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-12);
+  height: var(--space-12);
+  background: var(--accent-violet-soft);
+  border: 1px solid var(--accent-violet-border);
+  border-radius: var(--radius-xl);
+  color: var(--accent-violet);
+}
+
+.icon {
+  width: var(--space-6);
+  height: var(--space-6);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.subheading {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-muted);
+}
+
+/* ---------------- Session list ---------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1 1 0;
+  min-height: 0;
+  list-style: none;
+}
+
+.row {
+  /* Equal share of the remaining height - N rows always fit exactly. */
+  flex: 1 1 0;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: 11rem 1fr auto;
+  align-items: center;
+  gap: var(--space-6);
+
+  padding: var(--space-4) var(--space-6);
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border);
+  border-left: 4px solid var(--accent-color);
+  border-radius: var(--radius-xl);
+}
+
+/* Time block */
+
+.time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.timeStart {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.timeEnd {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+/* Title block */
+
+.details {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-text);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.presenter {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Right-hand meta */
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.room {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.roomIcon {
+  width: 0.875rem;
+  height: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-display);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ---------------- Status states ----------------
+ * Status is never carried by colour alone: "live" also gets a filled dark
+ * surface and a text badge, "past" gets a text label (Constitution VII).
+ */
+
+.live {
+  background: var(--color-active-bg);
+  border-color: var(--color-active-bg);
+  box-shadow: var(--shadow-active);
+}
+
+.live .timeStart,
+.live .title {
+  color: var(--color-active-fg);
+}
+
+.live .timeEnd,
+.live .presenter {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.live .room {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--color-active-fg);
+}
+
+.live .roomIcon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.liveBadge {
+  background: var(--color-status-live);
+  color: #04231a;
+}
+
+.livePulse {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: var(--radius-pill);
+  background: currentColor;
+  animation: pulse var(--motion-pulse) ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.nextBadge {
+  background: var(--accent-blue-soft);
+  border: 1px solid var(--accent-blue-border);
+  color: var(--accent-blue);
+}
+
+.past {
+  opacity: 0.5;
+}
+
+.pastBadge {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.empty {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .livePulse {
+    animation: none;
+  }
+}

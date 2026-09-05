@@ -11,6 +11,11 @@ import react from '@vitejs/plugin-react';
  */
 export default defineConfig({
   plugins: [react()],
+  // Pre-bundled up front so Vite does not discover and re-optimize mid-run,
+  // which reloads the page under browser-mode tests and makes them flaky.
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-dom/client', 'react/jsx-dev-runtime'],
+  },
   build: {
     // Static output only — no SSR, no server runtime (Constitution VIII).
     outDir: 'dist',
