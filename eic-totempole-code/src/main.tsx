@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { App } from './app/App';
+import { PreviewFrame } from './components/PreviewFrame/PreviewFrame';
 import { KioskProvider } from './context/KioskContext';
 
 import './styles/tokens.css';
@@ -25,7 +26,11 @@ if (!container) {
 createRoot(container).render(
   <StrictMode>
     <KioskProvider>
-      <App />
+      {/* Pass-through on kiosk-sized viewports; scales the shell to fit on
+          anything smaller, purely so deploys can be checked from a phone. */}
+      <PreviewFrame>
+        <App />
+      </PreviewFrame>
     </KioskProvider>
   </StrictMode>,
 );

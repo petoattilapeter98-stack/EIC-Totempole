@@ -11,9 +11,16 @@
  */
 
 .shell {
-  height: 100vh;  /* fallback first */
-  height: 100dvh;
-  width: 100vw;
+  /*
+   * Defaults are the real kiosk sizing. PreviewFrame overrides these two
+   * custom properties with fixed design dimensions so the shell fills the
+   * scaled stage instead of the device viewport - without that, 100dvh would
+   * resolve to a phone's height and the 3:2 proportions would be lost.
+   * On the kiosk nothing sets them, so the fallbacks below apply unchanged.
+   */
+  height: 100vh; /* fallback first */
+  height: var(--shell-height, 100dvh);
+  width: var(--shell-width, 100vw);
 
   display: grid;
   grid-template-rows: auto auto auto 1fr auto;
