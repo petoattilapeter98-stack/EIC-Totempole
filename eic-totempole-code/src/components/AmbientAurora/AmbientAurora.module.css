@@ -1,0 +1,107 @@
+/*
+ * Ambient background for attract mode.
+ *
+ * Deliberately NO filter: blur(). The panel is 3840x2560 - nearly 10 megapixels -
+ * and a full-bleed blur at that fill rate is expensive to composite for days on
+ * end. Soft radial-gradient stops give the same diffuse look for free.
+ *
+ * Only transform and opacity animate, so this stays on the compositor and never
+ * triggers layout or paint.
+ */
+
+.aurora {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+
+  opacity: 0;
+  transition: opacity 1.4s var(--ease-out-expo);
+}
+
+.visible {
+  opacity: 1;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+
+  /*
+   * Paused unless attract mode is on. An animation running behind opacity: 0
+   * still burns compositor work every frame - over a multi-day uptime that is
+   * exactly the kind of quiet waste Constitution V is about.
+   */
+  animation-play-state: paused;
+}
+
+.visible .blob {
+  animation-play-state: running;
+}
+
+/* Durations are coprime so the three never resynchronise into a visible loop. */
+
+/*
+ * TEKsystems brand blue #0098D1 and orange #FE9225 against the navy ground.
+ * Contrast rules do not apply here - this is a decorative wash behind
+ * aria-hidden, never a surface for text.
+ *
+ * Blue leads (two of the three blobs) with orange as the warm counterpoint,
+ * matching how the brand is weighted elsewhere: blue for identity, orange for
+ * accent.
+ */
+
+.blobA {
+  width: 62%;
+  height: 88%;
+  top: -18%;
+  left: -8%;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 152, 209, 0.9) 0%, rgba(0, 152, 209, 0) 68%);
+  animation: driftA 37s ease-in-out infinite alternate;
+}
+
+.blobB {
+  width: 58%;
+  height: 82%;
+  top: 6%;
+  right: -12%;
+  background: radial-gradient(circle at 50% 50%, rgba(254, 146, 37, 0.72) 0%, rgba(254, 146, 37, 0) 68%);
+  animation: driftB 43s ease-in-out infinite alternate;
+}
+
+.blobC {
+  width: 70%;
+  height: 70%;
+  bottom: -22%;
+  left: 22%;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 152, 209, 0.55) 0%, rgba(0, 152, 209, 0) 68%);
+  animation: driftC 53s ease-in-out infinite alternate;
+}
+
+@keyframes driftA {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(14%, 10%, 0) scale(1.18); }
+}
+
+@keyframes driftB {
+  from { transform: translate3d(0, 0, 0) scale(1.1); }
+  to   { transform: translate3d(-12%, 14%, 0) scale(1); }
+}
+
+@keyframes driftC {
+  from { transform: translate3d(0, 0, 0) scale(1); }
+  to   { transform: translate3d(10%, -12%, 0) scale(1.22); }
+}
+
+/*
+ * Reduced motion keeps the colour wash - it is atmosphere, not information -
+ * but removes all movement.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .blob,
+  .visible .blob {
+    animation: none;
+  }
+}

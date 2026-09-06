@@ -6,35 +6,81 @@
 
 :root {
   /* ---------------------------------------------------------------
+   * TEKsystems brand palette
+   * Source: brandcolorcode.com/teksystems
+   *
+   * Measured contrast (WCAG 2.1, needs 4.5:1 body / 3:1 large + UI):
+   *   #FE9225 on #FFFFFF   2.25:1  FAILS EVERYTHING - fill only, never ink
+   *   #0098D1 on #FFFFFF   3.27:1  large text + UI only, never body copy
+   *   #FE9225 on #011C31   7.72:1  PASS AAA
+   *   #FFFFFF on #011C31  17.33:1  PASS AAA
+   *   #011C31 on #F8FAFC  16.58:1  PASS AAA
+   *
+   * The palette is built for a dark ground, which is why it carries the
+   * attract state so well and why the -ink derivations below exist: brand
+   * orange simply cannot be a foreground colour on the light UI.
+   * ------------------------------------------------------------- */
+  --brand-orange: #fe9225;
+  --brand-blue: #0098d1;
+  --brand-navy: #011c31;
+
+  /* Darkened derivations, for foreground use on light surfaces only.
+     #a85400 on #FFFFFF = 5.34:1, #00688f on #FFFFFF = 6.22:1 - both PASS AA. */
+  --brand-orange-ink: #a85400;
+  --brand-blue-ink: #00688f;
+
+  /* Soft fills that sit BEHIND dark text. */
+  --brand-orange-soft: #fff4e8;
+  --brand-blue-soft: #e8f6fc;
+  --brand-orange-border: #fdd9b0;
+  --brand-blue-border: #b3e0f1;
+
+  /* ---------------------------------------------------------------
    * Surfaces
    * ------------------------------------------------------------- */
-  --color-bg: #f8fafc;              /* page background */
+  /*
+   * The ground is a navy-tinted grey, not neutral slate. Two reasons: a 50"
+   * panel of #F8FAFC behind #FFFFFF cards is close to white-on-white and glares
+   * in a lobby, and a tinted ground keeps the brand present even in the light
+   * state. Cards stay pure white so they now read as panels lifting off a
+   * surface rather than dissolving into it.
+   *
+   * #011C31 on #E7EEF4 = 14.80:1 and #55677A on #E7EEF4 = 4.97:1 - both still
+   * PASS AA, so darkening the ground costs no legibility.
+   */
+  --color-bg: #e7eef4;              /* page background, navy-tinted */
   --color-surface: #ffffff;         /* elevated cards */
-  --color-surface-sunken: #f8fafc;  /* insets inside a surface */
-  --color-border: #e2e8f0;
-  --color-border-soft: rgba(226, 232, 240, 0.7);
+  --color-surface-sunken: #f3f7fa;  /* insets inside a surface */
+
+  /* Borders carry more weight now that they do the work of separating a white
+     card from a ground that is no longer almost the same colour. */
+  --color-border: #d3e0ea;
+  --color-border-soft: rgba(211, 224, 234, 0.8);
 
   /* Soft, layered elevation — matches the reference mockup's card feel */
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-surface: 0 20px 45px -15px rgba(15, 23, 42, 0.08),
-                    0 1px 3px rgba(15, 23, 42, 0.03);
-  --shadow-raised: 0 24px 50px -18px rgba(15, 23, 42, 0.14),
-                   0 1px 3px rgba(15, 23, 42, 0.04);
-  --shadow-active: 0 12px 30px -8px rgba(15, 23, 42, 0.3);
+  --shadow-sm: 0 1px 3px rgba(1, 28, 49, 0.04);
+  --shadow-surface: 0 20px 45px -15px rgba(1, 28, 49, 0.08),
+                    0 1px 3px rgba(1, 28, 49, 0.03);
+  --shadow-raised: 0 24px 50px -18px rgba(1, 28, 49, 0.14),
+                   0 1px 3px rgba(1, 28, 49, 0.04);
+  --shadow-active: 0 12px 30px -8px rgba(1, 28, 49, 0.3);
 
   /* ---------------------------------------------------------------
    * Text & active states
    * Contrast (WCAG AA needs 4.5:1 body / 3:1 large):
-   *   #0F172A on #F8FAFC ≈ 16.9:1  PASS AAA
-   *   #0F172A on #FFFFFF ≈ 17.9:1  PASS AAA
-   *   #64748B on #FFFFFF ≈  4.8:1  PASS AA  (muted body)
-   *   #94A3B8 on #FFFFFF ≈  2.6:1  FAILS AA — decorative/large-only, never body copy
-   *   #FFFFFF on #0F172A ≈ 17.9:1  PASS AAA (active tab)
+   *   #011C31 on #E7EEF4 ≈ 14.80:1  PASS AAA  (base ink on the tinted ground)
+   *   #011C31 on #FFFFFF ≈ 17.85:1  PASS AAA  (base ink on cards)
+   *   #55677A on #FFFFFF ≈  5.1:1   PASS AA   (muted body)
+   *   #55677A on #E7EEF4 ≈  4.97:1  PASS AA   (muted body on the ground)
+   *   #94A3B8 on #FFFFFF ≈  2.6:1   FAILS AA  — decorative/large-only
+   *   #FFFFFF on #011C31 ≈ 17.33:1  PASS AAA  (active tab, live row)
    * ------------------------------------------------------------- */
-  --color-text: #0f172a;
-  --color-text-muted: #64748b;
+  /* Base ink is brand navy rather than a generic slate: 16.58:1 on the page
+     background, and it puts the brand into every line of text on the kiosk. */
+  --color-text: var(--brand-navy);
+  --color-text-muted: #55677a;      /* navy-tinted grey, 5.1:1 on #FFFFFF */
   --color-text-faint: #94a3b8;      /* large/decorative only — fails AA at body size */
-  --color-active-bg: #0f172a;
+  --color-active-bg: var(--brand-navy);
   --color-active-fg: #ffffff;
 
   /* ---------------------------------------------------------------
@@ -43,29 +89,38 @@
    * only ones cleared for text/essential icons on white or slate-50.
    * The -soft variants are fills that sit BEHIND dark text.
    * ------------------------------------------------------------- */
-  --accent-emerald: #059669;   /* ≈ 4.5:1 on #FFFFFF */
-  --accent-blue: #2563eb;      /* ≈ 5.9:1 */
-  --accent-violet: #7c3aed;    /* ≈ 6.3:1 */
-  --accent-amber: #b45309;     /* ≈ 5.1:1 — deliberately 700; amber-600 fails AA */
-  --accent-cyan: #0e7490;      /* ≈ 4.8:1 — deliberately 700; cyan-600 fails AA */
-  --accent-rose: #e11d48;      /* ≈ 4.6:1 */
+  /*
+   * The six names are kept because TabMeta.accent depends on them, but they no
+   * longer describe a rainbow: they now resolve to a brand-coherent ramp.
+   * Blue family carries CATEGORY IDENTITY, orange family carries STATE.
+   *
+   * Every value here is foreground-safe on white (>= 3:1 for icons and UI).
+   * Raw --brand-orange is deliberately absent: at 2.25:1 it cannot be a
+   * foreground colour anywhere on the light UI, only a fill.
+   */
+  --accent-blue: var(--brand-blue);   /* #0098D1  3.27:1 - UI/large only */
+  --accent-cyan: #0086b8;             /*          4.0:1  */
+  --accent-emerald: #00809e;          /*          4.6:1  */
+  --accent-violet: var(--brand-blue-ink); /* #00688F  6.22:1 */
+  --accent-amber: var(--brand-orange-ink); /* #A85400 5.34:1 */
+  --accent-rose: #8a4a10;             /*          6.9:1  */
 
-  --accent-emerald-soft: #ecfdf5;
-  --accent-blue-soft: #eff6ff;
-  --accent-violet-soft: #f5f3ff;
-  --accent-amber-soft: #fffbeb;
-  --accent-cyan-soft: #ecfeff;
-  --accent-rose-soft: #fff1f2;
+  --accent-blue-soft: var(--brand-blue-soft);
+  --accent-cyan-soft: #e6f4fa;
+  --accent-emerald-soft: #e6f2f6;
+  --accent-violet-soft: #e6eff4;
+  --accent-amber-soft: var(--brand-orange-soft);
+  --accent-rose-soft: #f7ede3;
 
-  --accent-emerald-border: #a7f3d0;
-  --accent-blue-border: #bfdbfe;
-  --accent-violet-border: #ddd6fe;
-  --accent-amber-border: #fde68a;
-  --accent-cyan-border: #a5f3fc;
-  --accent-rose-border: #fecdd3;
+  --accent-blue-border: var(--brand-blue-border);
+  --accent-cyan-border: #a8d9ea;
+  --accent-emerald-border: #a3cfdb;
+  --accent-violet-border: #a8c6d6;
+  --accent-amber-border: var(--brand-orange-border);
+  --accent-rose-border: #e0c3a4;
 
-  /* Live status indicator */
-  --color-status-live: #10b981;
+  /* State: brand orange. On the dark active surface it reads at 7.72:1. */
+  --color-status-live: var(--brand-orange);
 
   /* ---------------------------------------------------------------
    * Typography — rem scale anchored to the 16px root set in reset.css
@@ -84,6 +139,10 @@
   --text-4xl: 2.25rem;     /* 36px */
   --text-5xl: 3rem;        /* 48px */
   --text-6xl: 3.75rem;     /* 60px */
+  /* Display sizes for the hero. At 1920x1280 viewed from 3-5m these are the
+     only steps large enough to carry across a lobby. */
+  --text-7xl: 4.5rem;      /* 72px */
+  --text-8xl: 5.5rem;      /* 88px */
 
   --tracking-tight: -0.04em;
   --tracking-wide: 0.08em;

@@ -14,7 +14,7 @@
 
   /* Letterbox. Deliberately dark so the kiosk's own #F8FAFC page background
      reads as the edge of the frame rather than blending into the device. */
-  background: #0b1120;
+  background: var(--brand-navy);
   overflow: hidden;
 }
 

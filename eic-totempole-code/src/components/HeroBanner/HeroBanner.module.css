@@ -1,11 +1,17 @@
+/*
+ * The hero is the only element that gets to shout. Previously the header, hero,
+ * nav and content were all white cards of near-identical weight, so nothing
+ * told a visitor where to look first - on a 50" panel seen from 4m that reads
+ * as a form rather than a welcome.
+ */
 .hero {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-8);
+  gap: var(--space-10);
 
-  padding: var(--space-8) var(--space-12);
+  padding: var(--space-10) var(--space-12);
   background: var(--color-surface);
   border: 1px solid var(--color-border-soft);
   border-radius: var(--radius-3xl);
@@ -45,13 +51,27 @@
 
 /* Welcome headline (spec FR-009) */
 .headline {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-4);
   font-family: var(--font-display);
-  font-size: var(--text-5xl);
+  font-size: var(--text-7xl);
   font-weight: 700;
   line-height: var(--leading-tight);
   letter-spacing: var(--tracking-tight);
   color: var(--color-text);
+}
+
+/*
+ * The venue name is the payload of the sentence, so it carries the brand blue
+ * and drops onto its own line. "Welcome to" is connective tissue and is set
+ * quieter, which lets the name read as the headline rather than the whole
+ * phrase competing at one weight.
+ */
+.headlineLead {
+  display: block;
+  font-size: var(--text-4xl);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: -0.01em;
 }
 
 .headlineAccent {
@@ -60,7 +80,7 @@
 
 .subline {
   margin: 0;
-  font-size: var(--text-xl);
+  font-size: var(--text-2xl);
   line-height: var(--leading-normal);
   color: var(--color-text-muted);
 }
@@ -69,15 +89,15 @@
   color: var(--color-text);
   font-weight: 700;
   text-decoration: underline;
-  text-decoration-color: rgba(37, 99, 235, 0.4);
+  text-decoration-color: rgba(0, 152, 209, 0.55);
   text-underline-offset: 0.25em;
 }
 
 /* Decorative geometric graphic (spec FR-010) */
 .graphic {
   flex-shrink: 0;
-  width: 16rem;
-  height: 13rem;
+  width: 21rem;
+  height: 17rem;
   animation: float var(--motion-float) ease-in-out infinite;
 }
 

@@ -1,6 +1,7 @@
 import { useKiosk } from '../../context/KioskContext';
 import { getTab } from '../../tabs/registry';
 import { tabButtonId, tabPanelId } from '../TabNav/TabNav';
+import styles from './ContentRegion.module.css';
 
 interface ContentRegionProps {
   /**
@@ -24,7 +25,10 @@ export function ContentRegion({ className }: ContentRegionProps) {
 
   return (
     <main
-      className={className}
+      // Keyed on the tab so the entry animation replays on every switch rather
+      // than only on first mount.
+      key={activeTab}
+      className={`${className ?? ''} ${styles.enter}`}
       role="tabpanel"
       id={tabPanelId(activeTab)}
       aria-labelledby={tabButtonId(activeTab)}

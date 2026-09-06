@@ -1,0 +1,39 @@
+/*
+ * Entry choreography.
+ *
+ * Fires only when the active tab changes - which is exactly the moment a
+ * visitor has just touched the screen and is looking straight at it. That one
+ * moment does more perceived-quality work than any looping background, and it
+ * costs nothing at rest because nothing animates until a tab is tapped.
+ *
+ * transform + opacity only, so no layout and no reflow: the content region
+ * cannot be pushed into a scroll by the animation (Constitution II).
+ */
+/*
+ * `backwards`, NOT `both`.
+ *
+ * A filling animation outranks normal cascade declarations, so `both` would
+ * pin opacity at the keyframe's end value forever - permanently overriding the
+ * .recede dimming this panel gets in attract mode. `backwards` covers the
+ * pre-start phase and then hands control back to CSS once the animation ends.
+ */
+.enter {
+  animation: panelIn 0.34s var(--ease-out-expo) backwards;
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 0.75rem, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+}
