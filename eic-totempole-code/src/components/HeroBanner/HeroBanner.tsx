@@ -22,7 +22,7 @@ export function HeroBanner() {
         </div>
 
         <h2 className={styles.headline}>
-          {s.welcomeHeadline}
+          <span className={styles.headlineLead}>{s.welcomeHeadline}</span>
           <span className={styles.headlineAccent}>{s.welcomeHeadlineAccent}</span>
         </h2>
 
@@ -42,16 +42,19 @@ export function HeroBanner() {
         focusable="false"
       >
         <defs>
+          {/* TEKsystems brand: blue #0098D1 into navy #011C31, orange as the
+              warm counterpoint. Decorative only, so contrast rules do not
+              apply - see tokens.css for where they do. */}
           <linearGradient id="heroGradA" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#4f46e5" />
+            <stop offset="0%" stopColor="#0098d1" />
+            <stop offset="100%" stopColor="#011c31" />
           </linearGradient>
           <linearGradient id="heroGradB" x1="0%" y1="100%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#f59e0b" />
-            <stop offset="100%" stopColor="#ec4899" />
+            <stop offset="0%" stopColor="#fe9225" />
+            <stop offset="100%" stopColor="#e0730a" />
           </linearGradient>
           <filter id="heroShadow" x="-20%" y="-20%" width="140%" height="140%">
-            <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#0f172a" floodOpacity="0.15" />
+            <feDropShadow dx="0" dy="12" stdDeviation="10" floodColor="#011c31" floodOpacity="0.18" />
           </filter>
         </defs>
         <rect

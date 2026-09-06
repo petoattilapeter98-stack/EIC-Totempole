@@ -17,6 +17,29 @@ export interface UseIdleResetOptions {
 
 export interface IdleResetState {
   readonly remainingSeconds: number;
+
+  /**
+   * Whole seconds since the last real interaction.
+   *
+   * Unlike remainingSeconds this is MONOTONIC: it keeps climbing past an
+   * expiry and is only cleared by an actual pointerdown/keydown. The
+   * auto-reset firing is not a person touching the kiosk, so anything driven
+   * by "how long has nobody been here" (attract mode) must use this rather
+   * than the countdown, which restarts on its own.
+   */
+  readonly idleSeconds: number;
+
+  /**
+   * Whether anyone has touched the kiosk since it loaded.
+   *
+   * False from boot until the first real pointerdown/keydown. Lets the shell
+   * come up already in its ambient state rather than showing crisp UI to an
+   * empty lobby for the first idle period - on a display that may be power
+   * cycled or reloaded at any hour, "nobody has ever been here" is the honest
+   * starting condition.
+   */
+  readonly hasInteracted: boolean;
+
   /** Manual reset, exposed for tests and for future programmatic use. */
   readonly reset: () => void;
 }
@@ -50,6 +73,13 @@ export function useIdleReset({
   const deadlineRef = useRef<number>(Date.now() + durationMs);
   const [remainingSeconds, setRemainingSeconds] = useState(durationSeconds);
 
+  // Separate from the deadline on purpose: the deadline restarts itself on
+  // expiry so the footer keeps counting, but idle time must keep accumulating
+  // until a person actually touches the screen.
+  const lastInteractionRef = useRef<number>(Date.now());
+  const [idleSeconds, setIdleSeconds] = useState(0);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
   // Keep the latest callback without making the effect depend on its identity.
   const onExpireRef = useRef(onExpire);
   useEffect(() => {
@@ -57,25 +87,43 @@ export function useIdleReset({
   });
 
   const reset = useCallback(() => {
-    deadlineRef.current = Date.now() + durationMs;
+    const now = Date.now();
+    deadlineRef.current = now + durationMs;
+    lastInteractionRef.current = now;
   }, [durationMs]);
 
   useEffect(() => {
     // A duration change restarts the cycle rather than leaving a stale deadline.
-    deadlineRef.current = Date.now() + durationMs;
+    const start = Date.now();
+    deadlineRef.current = start + durationMs;
+    lastInteractionRef.current = start;
     setRemainingSeconds(durationSeconds);
+    setIdleSeconds(0);
 
     const handleInteraction = () => {
-      deadlineRef.current = Date.now() + durationMs;
+      const now = Date.now();
+      deadlineRef.current = now + durationMs;
+      lastInteractionRef.current = now;
+      // Latches on the first touch and stays true; setState bails out on an
+      // unchanged value, so this costs nothing on every subsequent touch.
+      setHasInteracted(true);
     };
 
     const id = setInterval(() => {
-      const msLeft = deadlineRef.current - Date.now();
+      const now = Date.now();
+
+      // Monotonic idle clock, unaffected by the expiry below.
+      const idle = Math.max(0, Math.floor((now - lastInteractionRef.current) / 1000));
+      setIdleSeconds((prev) => (prev === idle ? prev : idle));
+
+      const msLeft = deadlineRef.current - now;
 
       if (msLeft <= 0) {
         // Restart the cycle BEFORE firing, so a throwing callback cannot
         // leave the kiosk with an expired deadline firing every tick.
-        deadlineRef.current = Date.now() + durationMs;
+        // NOTE: lastInteractionRef is deliberately NOT touched here - an
+        // auto-reset is not a person, and attract mode must keep counting.
+        deadlineRef.current = now + durationMs;
         setRemainingSeconds(durationSeconds);
         onExpireRef.current();
         return;
@@ -96,5 +144,5 @@ export function useIdleReset({
     };
   }, [durationMs, durationSeconds]);
 
-  return { remainingSeconds, reset };
+  return { remainingSeconds, idleSeconds, hasInteracted, reset };
 }

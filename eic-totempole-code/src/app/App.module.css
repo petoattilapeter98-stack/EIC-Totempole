@@ -27,11 +27,91 @@
   gap: var(--space-5);
 
   padding: var(--space-8) var(--space-10);
-  background: var(--color-bg);
+  position: relative;
+
+  /*
+   * Ground plus a faint, static brand wash in the lower right, so the light
+   * state is never a flat white field. Static rather than animated on purpose:
+   * in the active state a visitor is reading, and drifting colour behind text
+   * competes for attention. Movement belongs to attract mode.
+   *
+   * Left in place during attract too - against navy it is invisible under the
+   * aurora, and removing it would pop rather than transition, since
+   * background-image does not animate.
+   */
+  background-color: var(--color-bg);
+  background-image: radial-gradient(
+    60rem 40rem at 88% 106%,
+    rgba(0, 152, 209, 0.14),
+    rgba(0, 152, 209, 0) 70%
+  );
+  transition: background-color 1.4s var(--ease-out-expo);
 
   /* The real guarantee. Combined with the 1fr row's min-height below, overflow
      is structurally impossible rather than merely unlikely. */
   overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Attract mode
+ *
+ * After ATTRACT_AFTER_SECONDS with nobody touching the kiosk, the chrome
+ * recedes and the hero takes over, so the display reads as an ambient
+ * showcase from across the lobby rather than an idle form.
+ *
+ * Everything here animates transform and opacity only - no layout, no paint -
+ * so it costs effectively nothing across a multi-day uptime. The shell rows do
+ * not resize, so the no-scroll guarantee (Constitution II) is untouched.
+ *
+ * Out is faster than in (0.45s vs 1.4s): drifting into ambience should feel
+ * gradual, but responding to a touch must feel instant.
+ * ------------------------------------------------------------------------- */
+
+/*
+ * Targeted rather than `.shell > *` on purpose: a universal child selector
+ * would have the same specificity as .aurora and could override its
+ * `position: absolute` depending on stylesheet order, dropping the wash into
+ * the grid flow as a sixth row.
+ */
+.recede,
+.hero {
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.45s var(--ease-out-expo), transform 0.45s var(--ease-out-expo);
+}
+
+.attract .recede,
+.attract .hero {
+  transition-duration: 1.4s;
+}
+
+/*
+ * The ground inverts. A soft colour wash over the light #F8FAFC page barely
+ * registers - measured on the running app, the aurora was at full opacity and
+ * still invisible. Against a deep ground it reads as light in a dark room,
+ * which is the whole effect.
+ *
+ * This is a background-color transition, so it paints rather than composites -
+ * acceptable because it happens once per mode change, not per frame.
+ */
+.attract {
+  background: var(--brand-navy);
+}
+
+/* Chrome recedes to ghosts rather than merely dimming. */
+.attract .recede {
+  opacity: 0.16;
+}
+
+/* The hero grows into the space attention has been freed from. */
+.attract .hero {
+  transform: scale(1.03);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .attract .hero {
+    transform: none;
+  }
 }
 
 .content {

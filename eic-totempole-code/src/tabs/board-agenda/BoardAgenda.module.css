@@ -68,6 +68,17 @@
   flex: 1 1 0;
   min-height: 0;
 
+  /*
+   * Staggered entry. The rows arrive in sequence rather than all at once,
+   * which reads as the schedule being dealt out.
+   *
+   * `backwards` keeps each row hidden through its delay, then releases it to
+   * normal cascade control. Deliberately NOT `both`: a filling animation
+   * outranks cascade declarations, so holding the end state would override the
+   * attract-mode dimming these rows inherit.
+   */
+  animation: rowIn 0.42s var(--ease-out-expo) backwards;
+
   display: grid;
   grid-template-columns: 11rem 1fr auto;
   align-items: center;
@@ -207,7 +218,7 @@
 
 .liveBadge {
   background: var(--color-status-live);
-  color: #04231a;
+  color: var(--brand-navy);
 }
 
 .livePulse {
@@ -253,8 +264,32 @@
   color: var(--color-text-muted);
 }
 
+/* 60ms apart: fast enough to feel like one gesture, slow enough to read as a
+   sequence. The whole list is settled in under half a second. */
+.row:nth-child(1) { animation-delay: 0.06s; }
+.row:nth-child(2) { animation-delay: 0.12s; }
+.row:nth-child(3) { animation-delay: 0.18s; }
+.row:nth-child(4) { animation-delay: 0.24s; }
+.row:nth-child(5) { animation-delay: 0.30s; }
+
+@keyframes rowIn {
+  from {
+    opacity: 0;
+    transform: translate3d(-0.75rem, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .livePulse {
+    animation: none;
+  }
+
+  /* No stagger, and crucially no `both` fill left holding rows invisible. */
+  .row {
     animation: none;
   }
 }
