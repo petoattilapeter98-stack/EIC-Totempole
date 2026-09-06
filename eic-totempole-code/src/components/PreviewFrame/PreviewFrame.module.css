@@ -1,0 +1,41 @@
+/*
+ * Validation-only wrapper. Never rendered on a kiosk-sized viewport - see
+ * usePreviewScale, which returns null there and makes this a pass-through.
+ */
+
+.frame {
+  width: 100vw;
+  height: 100vh; /* fallback */
+  height: 100dvh;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Letterbox. Deliberately dark so the kiosk's own #F8FAFC page background
+     reads as the edge of the frame rather than blending into the device. */
+  background: #0b1120;
+  overflow: hidden;
+}
+
+/*
+ * Laid out at the true design size and scaled down around its centre. The
+ * unscaled box overflows the frame, which is why .frame clips - the visual
+ * result is a correctly centred, correctly proportioned kiosk screen.
+ *
+ * --shell-width / --shell-height override the defaults in App.module.css, so
+ * the shell fills this stage instead of the phone's viewport. Without that,
+ * the shell's own 100dvh would resolve to the device height and the aspect
+ * ratio - the whole point of the preview - would be wrong.
+ */
+.stage {
+  flex: 0 0 auto;
+  width: 1920px;
+  height: 1280px;
+  transform-origin: center center;
+
+  --shell-width: 1920px;
+  --shell-height: 1280px;
+
+  box-shadow: 0 40px 120px -20px rgba(0, 0, 0, 0.6);
+}
