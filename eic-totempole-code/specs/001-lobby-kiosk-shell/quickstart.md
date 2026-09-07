@@ -10,9 +10,9 @@ How to set up, run, and prove this feature works. Implementation detail belongs 
 
 - Node.js 20 LTS or newer, npm 10+
 - Chromium downloaded for Playwright (the browser-mode test project) — `npx playwright install chromium`
-- The two variable font files placed in `public/fonts/` (see [research.md](./research.md) R2). Both are SIL OFL 1.1:
-  - `space-grotesk-variable.woff2`
-  - `plus-jakarta-sans-variable.woff2`
+- The four static per-weight font files placed in `public/fonts/` (see [research.md](./research.md) R2, including its post-implementation amendment — the original plan called for variable files, but they shipped with only one weight actually rendering). Both families are SIL OFL 1.1:
+  - `space-grotesk-v22-latin_latin-ext-regular.woff2` / `-700.woff2`
+  - `plus-jakarta-sans-v12-latin_latin-ext-regular.woff2` / `-700.woff2`
 
 ## Setup
 

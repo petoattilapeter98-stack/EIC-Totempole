@@ -44,6 +44,9 @@ export interface UseIdleResetOptions {
 
 export interface IdleResetState {
   readonly remainingSeconds: number;
+  readonly idleSeconds: number;     // added 2026-09-06 (backfilled) — see below
+  readonly hasInteracted: boolean;  // added 2026-09-06 (backfilled) — see below
+  readonly reset: () => void;       // added 2026-09-06 (backfilled) — manual reset for tests
 }
 
 export function useIdleReset(options: UseIdleResetOptions): IdleResetState;
@@ -53,6 +56,8 @@ export function useIdleReset(options: UseIdleResetOptions): IdleResetState;
 - Exposes whole seconds remaining until auto-reset, for the footer readout (spec FR-017).
 - Any `pointerdown` or `keydown` anywhere on `document` resets the countdown to its full duration (spec FR-018).
 - On reaching zero, calls `onExpire()` exactly once, then restarts a full cycle (spec FR-019).
+- **`idleSeconds`** (added for attract mode, spec FR-023–FR-026): whole seconds since the last real interaction, monotonic — it keeps climbing past an `onExpire` firing rather than resetting, because an auto-reset is not a visitor. `KioskContext` derives `isAttract` from this, never from `remainingSeconds`, specifically so attract mode survives the countdown restarting itself every cycle.
+- **`hasInteracted`** (added for attract mode): false until the first real `pointerdown`/`keydown`, then latched `true`. Lets attract mode start "on" from boot (spec FR-023) instead of only after one full idle period.
 
 **Implementation contract** (each clause exists to prevent a specific known failure)
 

@@ -82,6 +82,8 @@ export const DEFAULT_TAB_ID: TabId = 'board-agenda';
 
 > **HU labels above are a first pass and should be reviewed by a Hungarian speaker before sign-off.** They are content, not structure — correcting one is a one-line edit inside the owning tab folder.
 
+> **Accent colors amendment (2026-09-06)**: the `Accent` column above (id → accent name) is still accurate, but the colors each name resolves to were revised for the TEKsystems brand — they're no longer six independent colors but a blue/orange ramp derived from the brand palette. See [contracts/ui-structure.md](./contracts/ui-structure.md) §4a for the full rationale; `src/styles/tokens.css` is the source of truth for values.
+
 ---
 
 ## 4. `KioskState` (context value)
@@ -95,6 +97,7 @@ The single context provider at the app root. Full contract in [contracts/app-con
 | `locale` | `Locale` | `'en'` | Spec FR-005/FR-006. |
 | `toggleLocale` | `() => void` | — | Flips `en` ↔ `hu`. |
 | `resetInteractionState` | `() => void` | — | Idle-reset entry point (spec FR-019). |
+| `isAttract` | `boolean` | `true` | **Added 2026-09-06 (backfilled).** True once ATTRACT_AFTER_SECONDS have passed with no real interaction, or before the first interaction since load (spec FR-023–FR-026, User Story 5). Derived from `useIdleReset`'s monotonic `idleSeconds`/`hasInteracted`, not from `remainingSeconds` — see `IdleResetState` below for why. |
 
 **State transitions**:
 
@@ -105,6 +108,13 @@ The single context provider at the app root. Full contract in [contracts/app-con
 | Language toggled | unchanged | flips | FR-006: survives tab switches |
 | Idle countdown hits 0 | → `board-agenda` | **unchanged** | FR-019 + spec Assumption: locale is a display setting, not visitor-entered data |
 | Any interaction | unchanged | unchanged | Only resets the countdown deadline (FR-018) |
+
+| Trigger | `isAttract` | Notes |
+|---|---|---|
+| Initial mount / power-cycle | `true` | FR-023: attract is the resting state, not one reached only after prior use |
+| Any `pointerdown`/`keydown` | → `false` | FR-025 |
+| ATTRACT_AFTER_SECONDS since last real interaction | → `true` | FR-023 |
+| Idle countdown hits 0 (auto-reset fires) | **unchanged** | FR-026: an auto-reset is not a visitor interaction, so it must not exit attract |
 
 **Critical invariant**: `resetInteractionState()` MUST NOT reset `locale`. This is the single most likely implementation error in this feature — the phrase "clears any entered data" in FR-019 reads as "reset everything", but the spec's Assumptions section explicitly excludes locale. Asserted directly in `KioskContext.test.tsx`.
 
@@ -119,6 +129,9 @@ Returned by `useIdleReset`. Full contract in [contracts/hooks.md](./contracts/ho
 | Field | Type | Notes |
 |---|---|---|
 | `remainingSeconds` | `number` | Integer, `0 … durationSeconds`. Rendered by the footer (spec FR-017). |
+| `idleSeconds` | `number` | **Added 2026-09-06 (backfilled).** Whole seconds since the last real `pointerdown`/`keydown`, monotonic — unlike `remainingSeconds` it keeps climbing past an expiry instead of restarting, because an auto-reset firing is not a person touching the kiosk. Feeds `KioskState.isAttract` (spec FR-023, FR-026). |
+| `hasInteracted` | `boolean` | **Added 2026-09-06 (backfilled).** False from mount until the first real interaction; latches `true` thereafter. Lets the shell start in attract mode from boot (spec FR-023) rather than only after one full idle period has elapsed. |
+| `reset` | `() => void` | **Added 2026-09-06 (backfilled).** Manual reset, exposed for tests and future programmatic use. |
 
 Internal (never rendered, never in React state):
 
@@ -126,6 +139,7 @@ Internal (never rendered, never in React state):
 |---|---|---|
 | `deadlineRef` | `MutableRefObject<number>` | Absolute epoch ms. Interaction rewrites this; no re-subscription (research R4). |
 | `onExpireRef` | `MutableRefObject<() => void>` | Callback held in a ref so the effect never re-runs on identity change. |
+| `lastInteractionRef` | `MutableRefObject<number>` | **Added 2026-09-06 (backfilled).** Absolute epoch ms of the last real interaction. Deliberately separate from `deadlineRef`: the deadline restarts itself on every auto-reset expiry, but `idleSeconds` must keep accumulating until a person actually touches the screen — this is what makes attract mode survive an auto-reset (FR-026). |
 
 **Constants**: `IDLE_TIMEOUT_SECONDS = 60` (spec Assumption: matches the reference mockup; tunable), `TICK_MS = 250`.
 
