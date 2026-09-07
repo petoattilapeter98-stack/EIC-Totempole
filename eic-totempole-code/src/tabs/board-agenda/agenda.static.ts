@@ -50,7 +50,7 @@ export const agenda: AgendaDay = {
         hu: 'Megnyitó és Stratégiai Áttekintés',
       },
       presenter: { en: 'Executive Board', hu: 'Igazgatóság' },
-      room: { en: 'Boardroom A', hu: 'A Tárgyaló' },
+      room: { en: 'Boardroom A', hu: 'Tárgyaló A' },
       accent: 'violet',
     },
     {
@@ -62,7 +62,7 @@ export const agenda: AgendaDay = {
         hu: '2027-es Pénzügyi Kilátások',
       },
       presenter: { en: 'Finance Committee', hu: 'Pénzügyi Bizottság' },
-      room: { en: 'Boardroom A', hu: 'A Tárgyaló' },
+      room: { en: 'Boardroom A', hu: 'Tárgyaló A' },
       accent: 'blue',
     },
     {
@@ -86,7 +86,7 @@ export const agenda: AgendaDay = {
         hu: 'Ügyfélkapcsolati Áttekintés',
       },
       presenter: { en: 'Client Services', hu: 'Ügyfélszolgálat' },
-      room: { en: 'Boardroom B', hu: 'B Tárgyaló' },
+      room: { en: 'Boardroom B', hu: 'Tárgyaló B' },
       accent: 'emerald',
     },
     {

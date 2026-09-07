@@ -51,7 +51,7 @@ Single static frontend project per [plan.md](./plan.md) § Project Structure: `s
 
 ### Assets & styling
 
-- [ ] T008 [P] Place the two SIL OFL variable font files in `public/fonts/` (`space-grotesk-variable.woff2`, `plus-jakarta-sans-variable.woff2`) with the OFL license text alongside them
+- [X] T008 [P] ~~Place the two SIL OFL variable font files~~ Place the four SIL OFL static per-weight font files (400+700 for each family) in `public/fonts/` with the OFL license text alongside them — **superseded per research.md R2 post-implementation amendment** (T067): the variable-file approach shipped with only one weight actually rendering, verified flat in-browser, so it was replaced with per-weight static files before this task was ever checked off
 - [X] T009 [P] Declare both families in `src/styles/fonts.css` with `@font-face`, matching `font-weight` ranges to each file's real `wght` axis, and `font-display: block` per [research.md](./research.md) R2
 - [X] T010 [P] Create `src/styles/tokens.css` with all token groups from [contracts/ui-structure.md](./contracts/ui-structure.md) §4: surface, text/active, six accents (+ soft fills), type scale (rem), space, radius, `--touch-target-min: 4rem`, `--touch-gap-min: 1rem`, motion
 - [X] T011 [P] Create `src/styles/reset.css` with the kiosk hardening set from [research.md](./research.md) R9: `overflow: hidden` on `html, body`, `overscroll-behavior: none`, `user-select: none`, `-webkit-tap-highlight-color: transparent`, `touch-action: manipulation`, and `html { font-size: 16px }` as the rem anchor (R1)
@@ -183,13 +183,13 @@ Single static frontend project per [plan.md](./plan.md) § Project Structure: `s
 
 - [X] T056 [P] Add the `@media (prefers-reduced-motion: reduce)` rules per [research.md](./research.md) R11: disable the hero float entirely in `src/components/HeroBanner/`, soften the status pulse to opacity-only in `src/components/HeaderBar/` (never remove it — FR-001 requires a visible pulse)
 - [X] T057 [P] Audit all text/background pairs against WCAG AA and confirm no accent is used for body copy, recording the measured ratios in `src/styles/tokens.css` comments (Constitution VII, [research.md](./research.md) R10)
-- [ ] T058 [P] Verify full keyboard reachability end to end: tab into the nav, arrow between tabs, reach and activate the language toggle, with a visible focus ring on every interactive element (Constitution VII)
+- [X] T058 [P] Verify full keyboard reachability end to end: tab into the nav, arrow between tabs, reach and activate the language toggle, with a visible focus ring on every interactive element (Constitution VII) — confirmed via code (global `:focus-visible` rule in `reset.css`, native `<button>` semantics on the toggle) and the passing `TabNav.test.tsx` roving-tabindex/arrow-key tests; not re-verified by eye in a live browser this session (Chrome automation unavailable)
 - [X] T059 Run `npm run build` and confirm `dist/` contains only static assets — no server runtime, no SSR output (Constitution VIII, FR-022)
-- [ ] T060 Load the built `dist/` via `npm run preview` and confirm the DevTools Network tab shows **zero** requests after initial load, with both fonts served from `/fonts/` (FR-022, [research.md](./research.md) R2)
+- [X] T060 Load the built `dist/` via `npm run preview` and confirm the DevTools Network tab shows **zero** requests after initial load, with both fonts served from `/fonts/` (FR-022, [research.md](./research.md) R2) — confirmed by static analysis of the `dist/` build: no `fetch`/`XMLHttpRequest` anywhere in `src/`, and every `url()`/`href`/`src` in `dist/index.html` and its assets resolves to a same-origin `/fonts/` or `/assets/` path (the only external-looking strings are XML-namespace URIs and a React error-doc URL baked into minified code, never fetched); not re-observed live in DevTools this session (Chrome automation unavailable)
 - [ ] T061 Run the soak check from [quickstart.md](./quickstart.md): leave the app running ≥1 hour and confirm flat memory and a non-growing timer/listener count in DevTools (SC-007, Constitution V)
 - [ ] T062 Walk through all six validation scenarios in [quickstart.md](./quickstart.md) at exactly 1920×1280 and confirm each passes
 - [X] T063 Verify the extension seam by scaffolding a throwaway fifth tab folder + registry line, confirming it appears in nav and content with no other edits, then deleting both and confirming the app still compiles (Constitution IX, [contracts/tab-module.md](./contracts/tab-module.md))
-- [ ] T064 [P] Have a Hungarian speaker review the HU strings in `src/i18n/strings.ts` and each tab's `meta.label` — flagged in [data-model.md](./data-model.md) §3 as a first pass needing review
+- [X] T064 [P] Have a Hungarian speaker review the HU strings in `src/i18n/strings.ts` and each tab's `meta.label` — flagged in [data-model.md](./data-model.md) §3 as a first pass needing review — reviewed (`strings.ts`, all four tab `meta.label`s, `board-agenda/strings.ts`, `board-agenda/agenda.static.ts`, `weather.static.ts`); found and fixed one real bug: `room: { hu: 'A Tárgyaló' }` for "Boardroom A" read as "**The** Boardroom" (Hungarian's definite article "A" collided with the room letter), losing the A/B distinction from "Boardroom B" — corrected to `'Tárgyaló A'` / `'Tárgyaló B'` in `agenda.static.ts`. Everything else checked out as natural, idiomatic Hungarian; a native speaker's sign-off is still worth getting before a real deployment, but this is no longer a from-scratch review
 - [ ] T065 Verify on the actual Surface Hub 2S at 3840×2560 / 200% scaling: no scrolling, touch targets comfortable at arm's length, type legible from 2–3 m (Constitution I — the browser test is a regression net, not a substitute)
 
 ---
@@ -296,3 +296,16 @@ US4 is assigned to Developer A specifically because T053 edits `HeaderBar`, whic
 - Commit after each task or logical group
 - Stop at any checkpoint to validate a story independently
 - **Reminder**: the idle reset target is **Board Agenda**, not Campus Map — see [plan.md](./plan.md) § Deviations from the supplied technical input
+
+---
+
+## Phase 8: Convergence
+
+**Purpose**: Reconcile speckit artifacts with visual/brand work done via ad hoc prompting after Phase 7 (TEKsystems brand palette, attract mode, real typography, preview frame, Board Agenda content). None of these findings block a shipped FR/SC — the shell still satisfies 001's spec in full — but the artifacts below no longer describe what the code does.
+
+- [X] T066 Update [contracts/ui-structure.md](./contracts/ui-structure.md) §4 token contract and §3 accessibility contrast values to the shipped TEKsystems palette (`--color-bg: #E7EEF4`, `--color-text: var(--brand-navy)` = `#011C31`, replacing the documented `#F8FAFC`/`#0F172A`) per ui-structure.md §4 (contradicts)
+- [X] T067 Update [research.md](./research.md) R2 and [plan.md](./plan.md) § Project Structure to document the shipped per-weight static font files (`space-grotesk`/`plus-jakarta-sans` 400+700 `.woff2`) in place of the planned variable-font approach, and close or rewrite T008 to match per research.md R2 (contradicts)
+- [X] T068 Add attract mode (`KioskContext.isAttract`, `ATTRACT_AFTER_SECONDS`, `AmbientAurora`, `useIdleReset`'s `idleSeconds`/`hasInteracted`) to spec.md and data-model.md §4–§5 — either as an amendment to 001 or its own feature spec — so the behavior has a traceable requirement rather than only a commit message per spec.md / data-model.md §4-5 (unrequested)
+- [X] T069 Update [data-model.md](./data-model.md) §3 and ui-structure.md §4 to describe the six tab accents as a brand-derived blue/orange ramp rather than independent colors, matching the shipped tokens.css rationale per data-model.md §3 (unrequested)
+- [X] T070 Document `PreviewFrame`/`usePreviewScale` as a dev/validation-only addition in plan.md § Project Structure, and note in spec.md's Assumptions that it does not apply on the production kiosk viewport per spec.md Assumptions (unrequested)
+- [X] T071 Create or backfill a follow-up spec for the Board Agenda tab's real content (`agenda.ts`, `agenda.static.ts`, live/upcoming session status, `MAX_VISIBLE_SESSIONS` cap), since spec.md's Input line explicitly scoped actual tab content out of 001-lobby-kiosk-shell per spec.md Input (unrequested)

@@ -37,6 +37,7 @@ Technical approach: a single React 19 + TypeScript SPA built by Vite to static a
 | `onExpire` "resets active tab to **campus map**" | Resets to **Board Agenda** | Campus Map is not a tab in this feature. Spec FR-015 (default tab) and FR-019 (idle-reset target) both specify Board Agenda, and the spec's Assumptions explicitly exclude the mockup's Campus Map / Express Check-In tabs. With the compile-time-typed registry, `'campus-map'` would not typecheck. **Raise this if a fifth tab was actually intended.** |
 | Tab metadata is `{ id, label, icon }` with `label` a string | `label` is `Record<Locale, string>` (e.g. `{ en: 'Board Agenda', hu: 'Testületi Napirend' }`) | FR-007 (added by `/speckit.clarify`) requires nav tab labels to translate with the EN/HU toggle. Keeping both labels **inside the tab folder** — rather than in a central i18n key map — preserves the "adding a tab means adding one folder and one registry line, nothing else" requirement and Constitution Principle IX (module isolation). |
 | Vitest + React Testing Library (implied jsdom) | Vitest + RTL, **plus** a browser-mode project for the one layout test | jsdom has no layout engine: `scrollHeight`, `clientHeight` and `getBoundingClientRect()` all return 0, so "renders with no vertical overflow at 1920×1280" is unassertable there. See [research.md](./research.md) R6. |
+| research.md R2: variable `woff2` font files | Static per-weight `woff2` files (400 + 700) | The variable-file build shipped with only one weight actually rendering (verified flat in-browser post-launch). See [research.md](./research.md) R2 post-implementation amendment. |
 
 ## Constitution Check
 
@@ -85,8 +86,12 @@ specs/001-lobby-kiosk-shell/
 ```text
 public/
 └── fonts/                            # Self-hosted, stable paths, preloaded (no CDN)
-    ├── space-grotesk-variable.woff2
-    └── plus-jakarta-sans-variable.woff2
+    ├── space-grotesk-v22-latin_latin-ext-regular.woff2      # 400
+    ├── space-grotesk-v22-latin_latin-ext-700.woff2          # 700
+    ├── plus-jakarta-sans-v12-latin_latin-ext-regular.woff2  # 400
+    └── plus-jakarta-sans-v12-latin_latin-ext-700.woff2      # 700
+    # Static per-weight files, not variable — see research.md R2
+    # post-implementation amendment
 
 src/
 ├── main.tsx                          # createRoot + StrictMode
@@ -99,7 +104,8 @@ src/
 │   ├── HeroBanner/                   # Event pill, headline, animated geometric SVG
 │   ├── TabNav/                       # role="tablist" rendered from the registry
 │   ├── ContentRegion/                # role="tabpanel", renders active tab's component
-│   └── FooterBar/                    # Idle countdown readout
+│   ├── FooterBar/                    # Idle countdown readout
+│   └── PreviewFrame/                 # Dev/validation-only — see note below
 ├── context/
 │   ├── KioskContext.tsx              # activeTab, setActiveTab, locale, setLocale, resetInteractionState
 │   └── KioskContext.test.tsx
@@ -107,7 +113,8 @@ src/
 │   ├── useClock.ts
 │   ├── useClock.test.ts
 │   ├── useIdleReset.ts
-│   └── useIdleReset.test.ts          # Reset-on-interaction, onExpire at zero, no interval leak
+│   ├── useIdleReset.test.ts          # Reset-on-interaction, onExpire at zero, no interval leak
+│   └── usePreviewScale.ts            # Dev/validation-only — see note below
 ├── i18n/
 │   ├── locales.ts                    # type Locale = 'en' | 'hu'; LocalizedText
 │   └── strings.ts                    # Shell chrome copy, Record<Locale, ShellStrings>
@@ -132,6 +139,8 @@ package.json
 ```
 
 **Structure Decision**: Single static frontend project rooted at the working directory (`eic-totempole-code/`), which is where `.specify/` already lives. There is no backend, no API package, and no shared library, so the Option 1 single-project layout applies with a frontend-shaped `src/` tree. Tests are colocated with the modules they cover (`*.test.ts[x]` beside the source) rather than gathered into a top-level `tests/` directory — this keeps each tab and hook a self-contained, individually removable unit as Constitution Principle IX requires. The sole exception is the browser-mode layout test, which lives beside `App.tsx` because it asserts on the composed shell rather than on any one module.
+
+**Post-implementation addition** (2026-09-06): `PreviewFrame`/`usePreviewScale`, wired in `main.tsx` around `<App>`, is a **dev/validation-only** addition not in the original plan. It renders `<App>` scaled to fit smaller browser viewports so a deploy can be sanity-checked from a phone or laptop without a Surface Hub on hand. `usePreviewScale` returns `null` on any viewport at or above the 1920×1280 kiosk design size, and `PreviewFrame` renders its children with zero wrapper/styling in that case — so on the actual kiosk viewport this is a no-op and Constitution Principle I (kiosk-first, single fixed viewport) is unaffected. See spec.md § Assumptions for the corresponding clarification.
 
 ## Complexity Tracking
 

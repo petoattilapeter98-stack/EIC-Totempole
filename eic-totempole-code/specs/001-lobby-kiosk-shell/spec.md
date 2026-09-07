@@ -10,6 +10,10 @@
 
 ## Clarifications
 
+### Session 2026-09-06 (backfilled)
+
+- Attract mode (User Story 5, FR-023–FR-026, SC-010) was implemented directly via prompting rather than through `/speckit-clarify`, and is documented here retroactively by `/speckit-implement` acting on a `/speckit-converge` finding (T068). The requirements below describe the shipped, tested behavior in `src/context/KioskContext.tsx`, `src/hooks/useIdleReset.ts` and `src/components/AmbientAurora/`, not a forward-looking design.
+
 ### Session 2026-09-04
 
 - Q: When a visitor switches the language toggle to HU, should the kiosk's own shell text (welcome headline, nav tab labels, event pill, footer copy) actually translate into Hungarian, or does the toggle just change its own displayed state for now? → A: Translate the shell copy — toggling EN/HU swaps the header, hero, nav-tab labels, and footer text between English and Hungarian. Per-tab placeholder content stays untranslated either way since that's out of scope for this feature.
@@ -80,6 +84,26 @@ A Hungarian-speaking visitor prefers to read the kiosk in Hungarian rather than 
 
 ---
 
+### User Story 5 - Kiosk becomes an ambient showcase when nobody is present (Priority: P5)
+
+*(Backfilled 2026-09-06 — see Clarifications. Implemented before this was written.)*
+
+When no visitor is at the kiosk — including right after a power cycle or page reload, before anyone has ever touched it — the display drifts into an ambient "attract" state: the header, navigation and footer chrome recede, the hero banner grows, and a slow, animated brand-colored wash plays behind everything, so the kiosk reads as an eye-catching showcase from across the lobby rather than idle UI waiting for input. The instant anyone touches or presses a key anywhere, it returns to normal immediately.
+
+**Why this priority**: Purely a presentation enhancement layered on top of the idle auto-reset (US3) — the kiosk is fully functional without it. It's lowest priority because nothing else depends on it and it changes no functional behavior, only what's visible when nobody is interacting.
+
+**Independent Test**: Load the kiosk and touch nothing — it should already be in the ambient attract state. Touch it once — chrome returns immediately. Stop touching it — after the attract threshold it drifts back into ambient. Let a full idle auto-reset cycle (US3) fire while untouched — attract must still be showing afterward, not reset to normal.
+
+**Acceptance Scenarios**:
+
+1. **Given** the kiosk has just loaded or been power-cycled and has never been touched, **When** it is observed, **Then** it is already showing the ambient attract state (chrome receded, hero enlarged, animated wash visible) — attract is the resting state, not something the kiosk decays into over time.
+2. **Given** the kiosk is in the ambient attract state, **When** a visitor touches or presses any key anywhere, **Then** the kiosk returns to its normal chrome state immediately, and the transition out is faster than the transition in.
+3. **Given** a visitor touched the kiosk and then walked away, **When** ATTRACT_AFTER_SECONDS (default 30s, tunable — shorter than the US3 idle-reset duration so ambience engages while a visitor may still be approaching) elapses with no further interaction, **Then** the kiosk drifts back into the ambient attract state.
+4. **Given** the kiosk is untouched long enough for the US3 idle auto-reset (FR-019) to fire, **When** the reset completes, **Then** the kiosk remains in the ambient attract state — the auto-reset firing on its own MUST NOT be treated as a visitor interaction and MUST NOT exit attract mode.
+5. **Given** the kiosk is in the ambient attract state, **When** the state is inspected, **Then** the active tab and the language preference are unchanged from before attract engaged — attract is presentation-only and does not disturb US2/US4 state.
+
+---
+
 ### Edge Cases
 
 - What happens if the countdown reaches zero at the exact moment the visitor is mid-tap on a tab or the language toggle? The reset takes effect (return to Board Agenda, clear in-progress state) since no interaction was completed before zero was reached; a completed tap immediately before zero resets the countdown instead and the reset does not fire.
@@ -113,12 +137,17 @@ A Hungarian-speaking visitor prefers to read the kiosk in Hungarian rather than 
 - **FR-020**: The entire kiosk shell (header, hero, navigation bar, content region, footer) MUST fit within the fixed kiosk viewport with no vertical scrolling, in every tab state.
 - **FR-021**: All interactive elements in the shell (language toggle, navigation tabs) MUST meet the kiosk's minimum touch target size and minimum spacing between adjacent targets.
 - **FR-022**: The kiosk shell MUST NOT make any network calls in this feature; weather, event, and other displayed values are static/placeholder data for this feature.
+- **FR-023**: The kiosk MUST enter an ambient "attract" display state after ATTRACT_AFTER_SECONDS (default 30, tunable) of no touch or key interaction, and MUST already be in this state from initial load/power-cycle until the first real interaction — attract is the resting state, not a state reached only after prior use.
+- **FR-024**: While in attract mode, the header, navigation bar, content region and footer chrome MUST visually recede and the hero banner MUST enlarge, with an animated ambient background wash, while the shell continues to satisfy FR-020 (no scrolling) in both the attract and normal states.
+- **FR-025**: Any touch or key press anywhere on the kiosk MUST immediately exit attract mode and return the shell to its normal chrome state.
+- **FR-026**: Attract mode MUST persist across an idle auto-reset firing (FR-019) — the auto-reset completing is not a visitor interaction and MUST NOT exit attract mode — and MUST NOT alter the active tab or language preference beyond what FR-019 already specifies.
 
 ### Key Entities
 
 - **Navigation Tab**: One of the four persistent sections a visitor can select (Board Agenda, Local Transit, Company Highlights, Guest Wi-Fi). Has a label, an icon, and an active/inactive state; exactly one is active at a time.
 - **Idle Countdown**: The auto-reset timer shown in the footer. Has a remaining-seconds value that counts down, and a full starting duration it resets to on interaction or after firing.
 - **Language Preference**: The visitor-facing display language state (EN or HU) selected via the header toggle; persists across tab switches within the current kiosk session.
+- **Attract State**: Whether the kiosk is showing its ambient/idle display (on/off), derived from a monotonic "time since last real interaction" clock rather than from the Idle Countdown — so it is unaffected by the countdown restarting itself on every auto-reset. Independent of, and does not alter, the Navigation Tab or Language Preference state.
 
 ## Success Criteria *(mandatory)*
 
@@ -133,14 +162,16 @@ A Hungarian-speaking visitor prefers to read the kiosk in Hungarian rather than 
 - **SC-007**: The kiosk shell remains fully functional (clock ticking, countdown running, tabs switchable) after continuous display for at least 72 hours, with no manual reload.
 - **SC-008**: Every interactive element in the shell meets the kiosk's minimum touch target size and minimum spacing requirements, verified by measurement.
 - **SC-009**: Switching the language toggle changes 100% of the header, hero, navigation-tab-label, and footer text to the corresponding language, verified against a checklist of every such text element on screen.
+- **SC-010**: An untouched kiosk is in the ambient attract state within ATTRACT_AFTER_SECONDS of the last interaction (or immediately at load if never touched) and returns to normal chrome on the very next touch or key press, in 100% of observed cycles, including across at least two consecutive idle auto-reset firings with no interaction in between.
 
 ## Assumptions
 
 - The idle auto-reset countdown starts at 60 seconds, matching the reference mockup's behavior; the exact duration is a tunable value, not a hard product requirement, and can be adjusted later without a spec change.
+- ATTRACT_AFTER_SECONDS (User Story 5) defaults to 30 seconds — deliberately shorter than the 60-second idle auto-reset, so the kiosk becomes an eye-catching ambient display while a visitor may still be approaching, not only after it has given up waiting for one. Like the idle countdown, this is a tunable value, not a hard requirement.
 - Weather and event-name values are static placeholder data for this feature, consistent with "no network calls" being out of scope; live data integration (e.g., a weather service, an events calendar) is a future feature.
 - The four navigation tabs explicitly listed in this spec's Navigation bar section (Board Agenda, Local Transit, Company Highlights, Guest Wi-Fi) are the complete scope of this feature's navigation. The reference mockup additionally shows "Campus Map" and "Express Check-In" tabs; those are not part of this feature and are not built here.
 - "Board members" and "client visitors" are treated as a single, undifferentiated visitor persona for this shell — there is no login, identity, or role-based content differentiation in this feature.
 - The Language Preference is a display setting, not visitor-entered data; it is therefore not cleared by the idle auto-reset in FR-019, and continues to reflect the visitor's last choice after a reset back to Board Agenda.
 - Hungarian copy for the header, hero, nav labels, and footer is authored as static EN/HU text pairs baked into the shell itself; no translation service or backend call is used, consistent with "no network calls" being out of scope. Per-tab placeholder text in the content region is not translated in this feature and may continue to reference the tab's English label regardless of the selected language, since real (and potentially localized) tab content is future scope.
-- The kiosk shell targets the fixed kiosk viewport and touch-only interaction model established for this project (no scrolling, no hover-dependent affordances, minimum touch target sizing) rather than a general responsive range.
+- The kiosk shell targets the fixed kiosk viewport and touch-only interaction model established for this project (no scrolling, no hover-dependent affordances, minimum touch target sizing) rather than a general responsive range. A post-implementation addition (`PreviewFrame`/`usePreviewScale`, see plan.md § Project Structure) scales the shell down to fit a smaller browser window purely so a deploy can be visually sanity-checked off-device; it is a no-op at and above the 1920×1280 design viewport and does not change the production, on-kiosk behavior this assumption describes.
 - This feature covers the persistent shell only; the six illustrative panels in the reference mockup (map, check-in, agenda, transit, highlights, wi-fi) map only loosely to this feature's four tabs and placeholders — actual tab content for any tab is explicitly out of scope here.

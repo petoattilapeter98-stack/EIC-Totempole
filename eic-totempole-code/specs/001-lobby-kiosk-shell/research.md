@@ -36,6 +36,8 @@ Resolves the open technical questions implied by the Technical Context. Each ite
 
 **Verify at implementation**: confirm the actual `wght` axis range of the downloaded files and match the `@font-face` `font-weight` range to it.
 
+**Post-implementation amendment** (2026-09-06): the "verify at implementation" step failed — an intermediate variable-file build shipped with only a 400-weight face reachable, verified flat in-browser (the hero headline measured 728.3px wide at both `font-weight: 400` and `700`, i.e. no distinct bold face was actually rendering; the design had never been seen as specified). The decision was revised to **static per-weight `woff2` files** (400 and 700, the two weights the design actually uses) instead of a variable file, which the Alternatives list above had rejected on request-count grounds alone, without anticipating this failure mode. This trades two extra HTTP requests (four files instead of two, still all local/preloaded, so Constitution VIII and the restricted-network rationale are unaffected) for two faces that are verifiably distinct. See `src/styles/fonts.css` for the current `@font-face` declarations and `public/fonts/README.md` for the file provenance. `plan.md` § Project Structure has been updated to match.
+
 ---
 
 ## R3 — Localization without an i18n library

@@ -62,7 +62,7 @@ The target is the **element's own box including padding**, not the icon glyph. A
 | Clock | `<time dateTime={iso}>` so the machine-readable value is exposed |
 | Idle countdown | **`aria-live="off"`** — a per-second live region would make a screen reader announce a number every second, rendering the kiosk unusable |
 | Colour | Never the sole carrier of meaning: the active tab is a filled dark surface **and** `aria-selected` (research R10) |
-| Contrast | All text ≥ AA. Base `#0F172A` on `#F8FAFC` ≈ 16.9:1, on `#FFFFFF` ≈ 17.9:1. Accents used for text must be the ≥600 shade and individually verified |
+| Contrast | All text ≥ AA. Base `#011C31` (brand navy) on `#E7EEF4` ≈ 14.8:1, on `#FFFFFF` ≈ 17.85:1. Accents used for text must be the ≥600 shade and individually verified — see `src/styles/tokens.css` for the full measured table |
 
 Constitution VII requires keyboard reachability **even though input is touch-only** — this costs almost nothing here because the WAI-ARIA tabs pattern is the same code that makes the nav semantically correct for screen readers.
 
@@ -74,9 +74,9 @@ Constitution VII requires keyboard reachability **even though input is touch-onl
 
 | Group | Tokens |
 |---|---|
-| Surface | `--color-bg: #F8FAFC`, `--color-surface: #FFFFFF`, `--shadow-surface` (soft, layered) |
-| Text / active | `--color-text: #0F172A`, `--color-text-muted`, `--color-active-bg: #0F172A`, `--color-active-fg: #FFFFFF` |
-| Accents (category identity only) | `--accent-emerald`, `--accent-blue`, `--accent-violet`, `--accent-amber`, `--accent-cyan`, `--accent-rose` (+ matching `-soft` fills) |
+| Surface | `--color-bg: #E7EEF4` (navy-tinted, not neutral slate — see brand palette amendment below), `--color-surface: #FFFFFF`, `--shadow-surface` (soft, layered) |
+| Text / active | `--color-text: var(--brand-navy)` (`#011C31`), `--color-text-muted`, `--color-active-bg: var(--brand-navy)`, `--color-active-fg: #FFFFFF` |
+| Accents (category identity only) | `--accent-emerald`, `--accent-blue`, `--accent-violet`, `--accent-amber`, `--accent-cyan`, `--accent-rose` (+ matching `-soft` fills) — see §4a for the brand-derived values |
 | Type | `--font-display: 'Space Grotesk'`, `--font-body: 'Plus Jakarta Sans'`, `--text-xs … --text-6xl` (rem) |
 | Space | `--space-1 … --space-16` (rem) |
 | Radius | `--radius-md`, `--radius-xl`, `--radius-2xl`, `--radius-pill` |
@@ -84,6 +84,16 @@ Constitution VII requires keyboard reachability **even though input is touch-onl
 | Motion | `--motion-pulse`, `--motion-float`, `--ease-out-expo` |
 
 Accents are for **category identity only** — tab icons, the event pill, per-tab highlights. Body copy is always `--color-text` (research R10).
+
+### 4a. Brand palette amendment (2026-09-06)
+
+The surface/text/accent values above were revised after the original P1 build to apply the TEKsystems brand (orange `#FE9225`, blue `#0098D1`, navy `#011C31`; source: brandcolorcode.com/teksystems), post-dating this contract's original authoring. This is a **documentation catch-up, not a new decision to make** — the change already shipped in `src/styles/tokens.css`, which remains the source of truth for exact values and measured contrast ratios.
+
+- The six accent names (`AccentName` in [contracts/tab-module.md](./tab-module.md)) are unchanged, but no longer resolve to six independent colors. They now derive from two brand hues: `--accent-violet`/`--accent-amber` map to darkened navy/orange "ink" derivations (`--brand-blue-ink`, `--brand-orange-ink`), `--accent-blue`/`--accent-cyan`/`--accent-emerald` are blue-family steps, `--accent-rose` is an orange-family step. Blue carries category identity; orange carries state (see `--color-status-live: var(--brand-orange)`).
+- Raw `--brand-orange` (`#FE9225`) is deliberately never used as text/icon foreground on the light UI — it measures 2.25:1 on white, failing even the 3:1 large-text/icon threshold. It appears only on the navy ground (7.72:1) or as a fill behind navy text.
+- The page ground (`--color-bg`) moved from a neutral `#F8FAFC` to a navy-tinted `#E7EEF4` specifically so the brand stays present, and so white cards read as panels lifting off a tinted ground rather than dissolving into a near-white field under lobby lighting.
+
+Data-model.md §3's tab/accent table (id, icon, EN/HU label per tab) is still accurate — only the color *values* behind the accent names changed, not which tab uses which name.
 
 ---
 
