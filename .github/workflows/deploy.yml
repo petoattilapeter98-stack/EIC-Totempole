@@ -76,7 +76,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ./.github/actions/deploy-to-s3
+      - uses: ../.github/actions/deploy-to-s3
         with:
           dist-path: eic-totempole-code/dist
           bucket: ${{ vars.S3_BUCKET }}
@@ -104,7 +104,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ./.github/actions/deploy-to-s3
+      - uses: ../.github/actions/deploy-to-s3
         with:
           dist-path: eic-totempole-code/dist
           bucket: ${{ vars.S3_BUCKET }}
