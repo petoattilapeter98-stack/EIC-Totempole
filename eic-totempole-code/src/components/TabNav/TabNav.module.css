@@ -4,7 +4,16 @@
 
 .tablist {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /*
+   * Column count is DERIVED from however many tabs the registry renders, not
+   * written down here. `repeat(4, 1fr)` used to hardcode it, which quietly
+   * contradicted registry.ts's promise that adding a tab needs "one entry
+   * below, nothing else" — the fifth tab would have overflowed or wrapped,
+   * breaking Constitution II. Keep it derived: a literal count re-creates the
+   * same latent bug for the next feature.
+   */
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   /* Constitution III: at least 16px between adjacent touch targets. */
   gap: var(--touch-gap-min);
 }
