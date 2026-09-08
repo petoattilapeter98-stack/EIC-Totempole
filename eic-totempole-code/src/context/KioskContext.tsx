@@ -29,6 +29,22 @@ export interface KioskState {
   readonly remainingSeconds: number;
 
   /**
+   * Report that a visitor is active, restarting the idle countdown.
+   *
+   * The document-level pointerdown/keydown listeners in `useIdleReset` cover
+   * every normal interaction, so nothing needs this for ordinary UI. It exists
+   * for interaction the parent document CANNOT observe — today, touches inside
+   * a cross-origin iframe, which are delivered to the frame's own document and
+   * never reach ours.
+   *
+   * Exposed as a public capability rather than letting a feature reach into the
+   * idle hook or dispatch synthetic events at `document` (Constitution IX).
+   * Callers MUST bound how long they will keep calling it: an activity signal
+   * that fails "stuck on" would hold an unattended display awake indefinitely.
+   */
+  readonly signalActivity: () => void;
+
+  /**
    * True once nobody has touched the kiosk for ATTRACT_AFTER_SECONDS.
    *
    * Derived from the monotonic idle clock rather than the countdown, so it
@@ -89,7 +105,7 @@ export function KioskProvider({
     setActiveTab(DEFAULT_TAB_ID);
   }, []);
 
-  const { remainingSeconds, idleSeconds, hasInteracted } = useIdleReset({
+  const { remainingSeconds, idleSeconds, hasInteracted, reset: signalActivity } = useIdleReset({
     durationSeconds: idleTimeoutSeconds,
     onExpire: resetInteractionState,
   });
@@ -110,9 +126,18 @@ export function KioskProvider({
       toggleLocale,
       resetInteractionState,
       remainingSeconds,
+      signalActivity,
       isAttract,
     }),
-    [activeTab, locale, toggleLocale, resetInteractionState, remainingSeconds, isAttract],
+    [
+      activeTab,
+      locale,
+      toggleLocale,
+      resetInteractionState,
+      remainingSeconds,
+      signalActivity,
+      isAttract,
+    ],
   );
 
   return <KioskContext.Provider value={value}>{children}</KioskContext.Provider>;

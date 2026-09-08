@@ -64,14 +64,14 @@ describe('TabNav', () => {
     expect(selected()[0]).toHaveAccessibleName(/Local Transit/);
 
     await user.keyboard('{End}');
-    expect(selected()[0]).toHaveAccessibleName(/Guest Wi-Fi/);
+    expect(selected()[0]).toHaveAccessibleName(/Restaurants/);
 
     await user.keyboard('{Home}');
     expect(selected()[0]).toHaveAccessibleName(/Board Agenda/);
 
     // Wraps backwards from the first tab.
     await user.keyboard('{ArrowLeft}');
-    expect(selected()[0]).toHaveAccessibleName(/Guest Wi-Fi/);
+    expect(selected()[0]).toHaveAccessibleName(/Restaurants/);
   });
 
   it('gives only the active tab a positive tabindex', () => {
