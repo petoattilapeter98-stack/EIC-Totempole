@@ -65,6 +65,11 @@ jobs:
       name: development
       url: ${{ vars.SITE_URL }}
     steps:
+      # Needed for the local composite action below - `uses: ./...` resolves
+      # against the checked-out workspace, which download-artifact alone does
+      # not populate. Checkout runs first because it cleans the workspace.
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: kiosk-dist
@@ -76,7 +81,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ../.github/actions/deploy-to-s3
+      - uses: ./.github/actions/deploy-to-s3
         with:
           dist-path: eic-totempole-code/dist
           bucket: ${{ vars.S3_BUCKET }}
@@ -93,6 +98,11 @@ jobs:
       name: production
       url: ${{ vars.SITE_URL }}
     steps:
+      # Needed for the local composite action below - `uses: ./...` resolves
+      # against the checked-out workspace, which download-artifact alone does
+      # not populate. Checkout runs first because it cleans the workspace.
+      - uses: actions/checkout@v4
+
       - uses: actions/download-artifact@v4
         with:
           name: kiosk-dist
@@ -104,7 +114,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ../.github/actions/deploy-to-s3
+      - uses: ./.github/actions/deploy-to-s3
         with:
           dist-path: eic-totempole-code/dist
           bucket: ${{ vars.S3_BUCKET }}
