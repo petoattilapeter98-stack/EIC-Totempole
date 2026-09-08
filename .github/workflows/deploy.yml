@@ -1,0 +1,110 @@
+name: Deploy Kiosk
+
+# Runs on every push to main. A PR merge *is* a push to main, so once direct
+# pushes to main are branch-protected (separate repo setting, not this file),
+# this trigger only ever fires from a merged, reviewed PR.
+#
+# workflow_dispatch lets a redeploy be triggered without a new commit - e.g.
+# after rotating a secret, or re-running a failed prod approval.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "eic-totempole-code/**"
+      - ".github/workflows/deploy.yml"
+      - ".github/actions/deploy-to-s3/**"
+  workflow_dispatch: {}
+
+# One deploy pipeline for main at a time. Do not cancel an in-flight deploy
+# just because another merge landed - let it finish, then the next run queues
+# behind it, so dev/prod are never left mid-deploy.
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: eic-totempole-code
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: eic-totempole-code/package-lock.json
+
+      - run: npm ci
+
+      # Only the browser-mode layout project needs a real browser.
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kiosk-dist
+          path: eic-totempole-code/dist
+          retention-days: 7
+
+  deploy-development:
+    name: Deploy to development
+    needs: build
+    runs-on: ubuntu-latest
+    # The "development" GitHub Environment - no required reviewers, so this proceeds
+    # automatically. Its secrets/vars are configured in
+    # Settings -> Environments -> development.
+    environment:
+      name: development
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kiosk-dist
+          path: eic-totempole-code/dist
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: ./.github/actions/deploy-to-s3
+        with:
+          dist-path: eic-totempole-code/dist
+          bucket: ${{ vars.S3_BUCKET }}
+
+  deploy-prod:
+    name: Deploy to production
+    needs: deploy-development
+    runs-on: ubuntu-latest
+    # The "production" GitHub Environment - configure required reviewers here
+    # (Settings -> Environments -> production) once the prod infra exists.
+    # That protection rule is the entire manual-approval gate; nothing in this
+    # workflow needs to know a human is involved.
+    environment:
+      name: production
+      url: ${{ vars.SITE_URL }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kiosk-dist
+          path: eic-totempole-code/dist
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - uses: ./.github/actions/deploy-to-s3
+        with:
+          dist-path: eic-totempole-code/dist
+          bucket: ${{ vars.S3_BUCKET }}

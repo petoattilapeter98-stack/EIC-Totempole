@@ -1,0 +1,33 @@
+name: Deploy static site to S3
+description: >
+  Two-step sync matching infra/README.md's cache-header contract: hashed
+  assets and fonts get a long immutable cache, index.html never caches so a
+  deploy is always picked up on next load. Step order matters - index.html
+  must be excluded from the sync so its own --delete pass cannot remove the
+  copy uploaded in step two.
+
+inputs:
+  dist-path:
+    description: Path to the built dist/ directory (from `npm run build`)
+    required: true
+  bucket:
+    description: Target S3 bucket name (no s3:// prefix)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Sync hashed assets and fonts (long, immutable cache)
+      shell: bash
+      run: |
+        aws s3 sync "${{ inputs.dist-path }}/" "s3://${{ inputs.bucket }}/" \
+          --delete \
+          --exclude "index.html" \
+          --cache-control "public,max-age=31536000,immutable"
+
+    - name: Upload index.html (never cached)
+      shell: bash
+      run: |
+        aws s3 cp "${{ inputs.dist-path }}/index.html" "s3://${{ inputs.bucket }}/index.html" \
+          --cache-control "no-cache,must-revalidate" \
+          --content-type "text/html; charset=utf-8"

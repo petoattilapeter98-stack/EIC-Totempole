@@ -1,6 +1,6 @@
 # Infrastructure
 
-Terraform for the Teksystem Budapest lobby kiosk. Static site on S3, fronted by
+Terraform for the TEKsystems Budapest lobby kiosk. Static site on S3, fronted by
 CloudFront for TLS on a custom domain, with Route 53 alias records.
 
 Infrastructure lives at the repository root, deliberately separate from the

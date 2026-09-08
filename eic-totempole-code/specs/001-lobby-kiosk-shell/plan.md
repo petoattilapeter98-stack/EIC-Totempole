@@ -6,7 +6,7 @@
 
 ## Summary
 
-Build the persistent, non-scrolling shell for the Teksystem Budapest lobby kiosk: a header bar (branding + pulsing live dot, one-second clock, static Budapest weather, EN/HU toggle), a hero banner (event pill, welcome headline, animated decorative geometry), a four-tab navigation row, a content region that absorbs all remaining height and renders the active tab's placeholder, and a footer idle countdown that resets on any interaction and returns the kiosk to Board Agenda at zero.
+Build the persistent, non-scrolling shell for the TEKsystems Budapest lobby kiosk: a header bar (branding + pulsing live dot, one-second clock, static Budapest weather, EN/HU toggle), a hero banner (event pill, welcome headline, animated decorative geometry), a four-tab navigation row, a content region that absorbs all remaining height and renders the active tab's placeholder, and a footer idle countdown that resets on any interaction and returns the kiosk to Board Agenda at zero.
 
 Technical approach: a single React 19 + TypeScript SPA built by Vite to static assets, styled with CSS Modules over one custom-property token file, with no component library, no CSS framework, no router, and no state library. The app shell is a `100dvh` CSS Grid with explicit rows (`auto auto auto 1fr`) so the content region mathematically cannot overflow. Tabs are self-contained folders behind a compile-time-typed registry that both the nav and the content region render from. All timers live in two cleanup-complete custom hooks (`useClock`, `useIdleReset`). Localization is a dependency-free typed string map, with each tab carrying its own EN/HU label so adding a tab stays a one-folder, one-line change.
 

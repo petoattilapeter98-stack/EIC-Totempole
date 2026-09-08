@@ -32,11 +32,11 @@ export interface ShellStrings {
  */
 export const strings = {
   en: {
-    brandName: 'Teksystem Budapest',
+    brandName: 'TEKsystems Budapest',
     brandSubtitle: 'Executive Lobby Kiosk',
     eventPill: 'Board of Directors Summit',
     welcomeHeadline: 'Welcome to',
-    welcomeHeadlineAccent: 'Teksystem Budapest',
+    welcomeHeadlineAccent: 'TEKsystems Budapest',
     welcomeSubline: 'Delighted to host the',
     welcomeSublineEmphasis: 'Board of Directors and our visiting clients',
     weatherCity: 'Budapest',
@@ -49,11 +49,11 @@ export const strings = {
     placeholderNote: 'Content coming soon',
   },
   hu: {
-    brandName: 'Teksystem Budapest',
+    brandName: 'TEKsystems Budapest',
     brandSubtitle: 'Vezetői Fogadótér Kioszk',
     eventPill: 'Igazgatósági Csúcstalálkozó',
     welcomeHeadline: 'Üdvözöljük a',
-    welcomeHeadlineAccent: 'Teksystem Budapesten',
+    welcomeHeadlineAccent: 'TEKsystems Budapesten',
     welcomeSubline: 'Örömmel látjuk vendégül',
     welcomeSublineEmphasis: 'az Igazgatóságot és látogató ügyfeleinket',
     weatherCity: 'Budapest',

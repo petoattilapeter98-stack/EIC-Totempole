@@ -168,7 +168,7 @@ Chrome copy not owned by any tab, in `src/i18n/strings.ts` as `satisfies Record<
 
 | Key | Purpose | Spec |
 |---|---|---|
-| `brandName` | "Teksystem Budapest" | FR-001 |
+| `brandName` | "TEKsystems Budapest" | FR-001 |
 | `brandSubtitle` | Kiosk descriptor under the brand | FR-001 |
 | `eventPill` | Current event name | FR-008 |
 | `welcomeHeadline` | Large welcome headline | FR-009 |

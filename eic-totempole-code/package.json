@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Teksystem Budapest corporate lobby kiosk — Surface Hub 2S shell",
+  "description": "TEKsystems Budapest corporate lobby kiosk — Surface Hub 2S shell",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
