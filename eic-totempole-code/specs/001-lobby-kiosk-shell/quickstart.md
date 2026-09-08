@@ -57,7 +57,7 @@ Each maps to spec acceptance scenarios and success criteria. Scenarios 1–5 are
 ### 1. Live shell on arrival — spec User Story 1 (P1)
 
 1. Load the app; do not touch it.
-2. **Expect**: brand "Teksystem Budapest" with a visibly pulsing status dot; clock showing the correct current time; today's date; Budapest weather (temperature + condition); a language toggle in its EN state.
+2. **Expect**: brand "TEKsystems Budapest" with a visibly pulsing status dot; clock showing the correct current time; today's date; Budapest weather (temperature + condition); a language toggle in its EN state.
 3. Watch the clock for 10 s. **Expect**: it advances one second at a time, no flicker, no reload.
 4. **Expect** in the hero: an event pill, a large welcome headline, and a geometric graphic in gentle continuous motion.
 

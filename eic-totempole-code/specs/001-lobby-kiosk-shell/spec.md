@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Build the base landing page shell for a corporate lobby kiosk that welcomes board members and client visitors to Teksystem Budapest. A visual reference mockup is at design\reference\interactive_lobby_dashboard.html, used only for layout structure/proportions, color values/type scale, copy/labels, and interaction behaviour — not for implementation. Scope is the persistent shell only (header bar, hero banner, navigation bar with four tabs, a content region rendering a placeholder per tab, and idle auto-reset behaviour). Out of scope: actual tab content and any network calls."
+**Input**: User description: "Build the base landing page shell for a corporate lobby kiosk that welcomes board members and client visitors to TEKsystems Budapest. A visual reference mockup is at design\reference\interactive_lobby_dashboard.html, used only for layout structure/proportions, color values/type scale, copy/labels, and interaction behaviour — not for implementation. Scope is the persistent shell only (header bar, hero banner, navigation bar with four tabs, a content region rendering a placeholder per tab, and idle auto-reset behaviour). Out of scope: actual tab content and any network calls."
 
 ## Clarifications
 
@@ -23,7 +23,7 @@
 
 ### User Story 1 - Guest sees a live, welcoming kiosk on arrival (Priority: P1)
 
-A board member or client visitor walks up to the kiosk in the Teksystem Budapest lobby. Without touching anything, they can immediately see where they are (branding), that the system is live (pulsing status indicator), what time and day it is, the local weather, and a welcoming headline naming the event they're attending.
+A board member or client visitor walks up to the kiosk in the TEKsystems Budapest lobby. Without touching anything, they can immediately see where they are (branding), that the system is live (pulsing status indicator), what time and day it is, the local weather, and a welcoming headline naming the event they're attending.
 
 **Why this priority**: This is the baseline experience every single visitor has, even one who never touches the screen. If this doesn't work, the kiosk fails its core purpose of making a strong, trustworthy first impression. It's also independently demonstrable with zero interaction.
 
@@ -31,7 +31,7 @@ A board member or client visitor walks up to the kiosk in the Teksystem Budapest
 
 **Acceptance Scenarios**:
 
-1. **Given** the kiosk shell has just loaded, **When** no interaction has occurred, **Then** the header shows the "Teksystem Budapest" brand name, a status indicator that visibly pulses, a clock showing the current time, today's date, and a Budapest weather reading (temperature + condition).
+1. **Given** the kiosk shell has just loaded, **When** no interaction has occurred, **Then** the header shows the "TEKsystems Budapest" brand name, a status indicator that visibly pulses, a clock showing the current time, today's date, and a Budapest weather reading (temperature + condition).
 2. **Given** the kiosk shell is displayed, **When** one real second elapses, **Then** the displayed clock advances by exactly one second without any page reload or flicker.
 3. **Given** the kiosk shell is displayed, **When** the visitor looks at the hero banner, **Then** they see an event pill naming the current event, a large welcome headline addressing guests, and a decorative geometric graphic that is gently and continuously moving.
 
@@ -115,7 +115,7 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 
 ### Functional Requirements
 
-- **FR-001**: The header MUST display the brand name "Teksystem Budapest" alongside a status indicator that visibly and continuously pulses to signal the kiosk is live.
+- **FR-001**: The header MUST display the brand name "TEKsystems Budapest" alongside a status indicator that visibly and continuously pulses to signal the kiosk is live.
 - **FR-002**: The header MUST display a clock showing the current time, accurate to the second, updating automatically every second without a page reload.
 - **FR-003**: The header MUST display the current date alongside the clock.
 - **FR-004**: The header MUST display local weather for Budapest, showing a temperature value and a condition label.
