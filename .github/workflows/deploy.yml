@@ -86,35 +86,35 @@ jobs:
           dist-path: eic-totempole-code/dist
           bucket: ${{ vars.S3_BUCKET }}
 
-  deploy-prod:
-    name: Deploy to production
-    needs: deploy-development
-    runs-on: ubuntu-latest
-    # The "production" GitHub Environment - configure required reviewers here
-    # (Settings -> Environments -> production) once the prod infra exists.
-    # That protection rule is the entire manual-approval gate; nothing in this
-    # workflow needs to know a human is involved.
-    environment:
-      name: production
-      url: ${{ vars.SITE_URL }}
-    steps:
-      # Needed for the local composite action below - `uses: ./...` resolves
-      # against the checked-out workspace, which download-artifact alone does
-      # not populate. Checkout runs first because it cleans the workspace.
-      - uses: actions/checkout@v4
+  # deploy-prod:
+  #   name: Deploy to production
+  #   needs: deploy-development
+  #   runs-on: ubuntu-latest
+  #   # The "production" GitHub Environment - configure required reviewers here
+  #   # (Settings -> Environments -> production) once the prod infra exists.
+  #   # That protection rule is the entire manual-approval gate; nothing in this
+  #   # workflow needs to know a human is involved.
+  #   environment:
+  #     name: production
+  #     url: ${{ vars.SITE_URL }}
+  #   steps:
+  #     # Needed for the local composite action below - `uses: ./...` resolves
+  #     # against the checked-out workspace, which download-artifact alone does
+  #     # not populate. Checkout runs first because it cleans the workspace.
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: kiosk-dist
-          path: eic-totempole-code/dist
+  #     - uses: actions/download-artifact@v4
+  #       with:
+  #         name: kiosk-dist
+  #         path: eic-totempole-code/dist
 
-      - uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+  #     - uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #         aws-region: ${{ vars.AWS_REGION }}
 
-      - uses: ./.github/actions/deploy-to-s3
-        with:
-          dist-path: eic-totempole-code/dist
-          bucket: ${{ vars.S3_BUCKET }}
+  #     - uses: ./.github/actions/deploy-to-s3
+  #       with:
+  #         dist-path: eic-totempole-code/dist
+  #         bucket: ${{ vars.S3_BUCKET }}
