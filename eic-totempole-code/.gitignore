@@ -11,6 +11,7 @@ coverage/
 .vitest/
 test-results/
 playwright-report/
+__screenshots__/
 
 # Logs
 *.log

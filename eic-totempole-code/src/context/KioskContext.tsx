@@ -29,6 +29,16 @@ export interface KioskState {
   readonly remainingSeconds: number;
 
   /**
+   * Re-arms the idle countdown without resetting active tab/locale state.
+   *
+   * Exposed for features that need to keep the countdown alive during a
+   * genuine, ongoing interaction useIdleReset's own document-level listeners
+   * cannot see (e.g. focus inside a cross-origin iframe -- see
+   * src/tabs/voice-assistant/useIframeIdleKeepalive.ts).
+   */
+  readonly reset: () => void;
+
+  /**
    * True once nobody has touched the kiosk for ATTRACT_AFTER_SECONDS.
    *
    * Derived from the monotonic idle clock rather than the countdown, so it
@@ -89,7 +99,7 @@ export function KioskProvider({
     setActiveTab(DEFAULT_TAB_ID);
   }, []);
 
-  const { remainingSeconds, idleSeconds, hasInteracted } = useIdleReset({
+  const { remainingSeconds, idleSeconds, hasInteracted, reset } = useIdleReset({
     durationSeconds: idleTimeoutSeconds,
     onExpire: resetInteractionState,
   });
@@ -110,9 +120,10 @@ export function KioskProvider({
       toggleLocale,
       resetInteractionState,
       remainingSeconds,
+      reset,
       isAttract,
     }),
-    [activeTab, locale, toggleLocale, resetInteractionState, remainingSeconds, isAttract],
+    [activeTab, locale, toggleLocale, resetInteractionState, remainingSeconds, reset, isAttract],
   );
 
   return <KioskContext.Provider value={value}>{children}</KioskContext.Provider>;

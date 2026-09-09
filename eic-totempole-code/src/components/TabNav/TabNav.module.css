@@ -3,8 +3,13 @@
 }
 
 .tablist {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  /* Flex, not a hardcoded-column grid: the tab count is driven entirely by
+     the registry (spec 001 contracts/tab-module.md), so the layout must not
+     assume how many tabs exist. A fixed `repeat(4, 1fr)` grid silently wraps
+     a 5th tab onto a second row instead of sharing width -- exactly the kind
+     of "adding a tab means touching more than one file" regression the
+     registry pattern exists to prevent. */
+  display: flex;
   /* Constitution III: at least 16px between adjacent touch targets. */
   gap: var(--touch-gap-min);
 }
@@ -15,8 +20,11 @@
   justify-content: center;
   gap: var(--space-3);
 
-  /* Constitution III: the element's own box is the 64px target, formed by
-     min-height + padding — never a transparent overlay. */
+  /* Shares the row evenly with however many tabs are registered, but never
+     shrinks below the 64px touch-target floor (Constitution III) -- if the
+     registry ever grows past what fits at that floor, tabs overflow rather
+     than silently wrapping to a second row or shrinking under the minimum. */
+  flex: 1 1 0;
   min-height: var(--touch-target-min);
   min-width: var(--touch-target-min);
   padding: var(--space-4) var(--space-5);

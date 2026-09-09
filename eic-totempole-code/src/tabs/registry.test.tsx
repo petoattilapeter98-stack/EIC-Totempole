@@ -10,12 +10,13 @@ import { DEFAULT_TAB_ID, TABS } from './registry';
  * These assertions are what keep the extension seam honest as tabs are added.
  */
 describe('tab registry', () => {
-  it('registers exactly four tabs in the FR-011 order', () => {
+  it('registers the FR-011 tabs in order, plus voice-assistant appended (spec 003)', () => {
     expect(TABS.map((t) => t.meta.id)).toEqual([
       'board-agenda',
       'local-transit',
       'company-highlights',
       'guest-wifi',
+      'voice-assistant',
     ]);
   });
 

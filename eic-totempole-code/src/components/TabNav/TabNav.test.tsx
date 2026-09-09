@@ -59,19 +59,20 @@ describe('TabNav', () => {
 
     const tabs = screen.getAllByRole('tab');
     tabs[0]?.focus();
+    const lastTabLabel = TABS[TABS.length - 1]!.meta.label.en;
 
     await user.keyboard('{ArrowRight}');
     expect(selected()[0]).toHaveAccessibleName(/Local Transit/);
 
     await user.keyboard('{End}');
-    expect(selected()[0]).toHaveAccessibleName(/Guest Wi-Fi/);
+    expect(selected()[0]).toHaveAccessibleName(new RegExp(lastTabLabel));
 
     await user.keyboard('{Home}');
     expect(selected()[0]).toHaveAccessibleName(/Board Agenda/);
 
     // Wraps backwards from the first tab.
     await user.keyboard('{ArrowLeft}');
-    expect(selected()[0]).toHaveAccessibleName(/Guest Wi-Fi/);
+    expect(selected()[0]).toHaveAccessibleName(new RegExp(lastTabLabel));
   });
 
   it('gives only the active tab a positive tabindex', () => {

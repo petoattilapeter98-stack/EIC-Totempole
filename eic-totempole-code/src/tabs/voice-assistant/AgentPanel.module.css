@@ -1,0 +1,160 @@
+.panel {
+  /* Fills the content region without ever forcing it to grow -- same
+     containment discipline as TabPlaceholder.module.css. */
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.idle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  height: 100%;
+  min-height: 0;
+  text-align: center;
+  padding: var(--space-6);
+}
+
+.iconWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: var(--space-16);
+  height: var(--space-16);
+
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-2xl);
+  color: var(--accent-color);
+}
+
+.icon {
+  width: var(--space-8);
+  height: var(--space-8);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text);
+}
+
+.subheading {
+  margin: 0;
+  max-width: 40rem;
+  font-size: var(--text-lg);
+  color: var(--color-text-muted);
+}
+
+.prompts {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  max-width: 44rem;
+}
+
+.promptsHeading {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-tight);
+  color: var(--color-text-muted);
+}
+
+.promptList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.promptItem {
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill);
+  color: var(--color-text);
+  font-size: var(--text-sm);
+}
+
+.startButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--space-4) var(--space-8);
+
+  background: var(--accent-color);
+  color: var(--color-surface);
+  border: none;
+  border-radius: var(--radius-pill);
+
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform var(--transition-touch);
+}
+
+.startButton:active {
+  transform: scale(0.97);
+}
+
+.active {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.signInHint {
+  flex-shrink: 0;
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.embedWrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--accent-border);
+}
+
+.endButton {
+  align-self: center;
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-6);
+
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill);
+
+  font-size: var(--text-base);
+  font-weight: 600;
+  cursor: pointer;
+}
