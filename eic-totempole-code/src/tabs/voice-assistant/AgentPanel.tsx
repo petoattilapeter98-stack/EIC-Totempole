@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Mic } from 'lucide-react';
 
 import { useKiosk } from '../../context/KioskContext';
@@ -6,16 +6,15 @@ import { accentVars } from '../../components/TabPlaceholder/accent';
 import { meta } from './meta';
 import { getVoiceAssistantStrings } from './strings';
 import { examplePrompts } from './examplePrompts';
-import { AgentEmbedContainer } from './AgentEmbedContainer';
-import { useIframeIdleKeepalive } from './useIframeIdleKeepalive';
+import { VoiceConversation } from './VoiceConversation';
 import styles from './AgentPanel.module.css';
 
-/** data-model.md AgentPanelState -- idle (prompts + Start) <-> active (embed + End). */
+/** data-model.md AgentPanelState -- idle (prompts + Start) <-> active (voice conversation + End). */
 type AgentPanelStatus = 'idle' | 'active';
 
 /**
  * The voice-assistant tab's own view-state machine (spec FR-001, FR-002,
- * FR-004, FR-008, FR-016, FR-019, FR-023).
+ * FR-004, FR-008, FR-016, FR-019).
  *
  * Re-entering this tab after any active -> idle transition always starts back
  * at 'idle' because this is a fresh component instance every time -- either
@@ -28,10 +27,6 @@ export function AgentPanel() {
   const { locale, reset } = useKiosk();
   const s = getVoiceAssistantStrings(locale);
   const [status, setStatus] = useState<AgentPanelStatus>('idle');
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-
-  // No-op while idle: targetRef.current is null until the embed mounts.
-  useIframeIdleKeepalive({ targetRef: iframeRef, reset });
 
   return (
     <div className={styles.panel} style={accentVars(meta.accent)}>
@@ -66,9 +61,8 @@ export function AgentPanel() {
         </div>
       ) : (
         <div className={styles.active}>
-          <p className={styles.signInHint}>{s.signInHint}</p>
-          <div className={styles.embedWrap}>
-            <AgentEmbedContainer locale={locale} iframeRef={iframeRef} />
+          <div className={styles.conversationWrap}>
+            <VoiceConversation locale={locale} reset={reset} />
           </div>
           <button
             type="button"

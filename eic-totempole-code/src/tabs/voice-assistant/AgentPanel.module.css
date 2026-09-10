@@ -126,15 +126,7 @@
   padding: var(--space-4);
 }
 
-.signInHint {
-  flex-shrink: 0;
-  margin: 0;
-  text-align: center;
-  font-size: var(--text-sm);
-  color: var(--color-text-muted);
-}
-
-.embedWrap {
+.conversationWrap {
   position: relative;
   flex: 1;
   min-height: 0;

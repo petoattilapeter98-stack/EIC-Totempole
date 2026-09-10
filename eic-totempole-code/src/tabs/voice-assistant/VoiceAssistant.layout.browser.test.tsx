@@ -15,13 +15,16 @@ import '../../styles/reset.css';
  * Runs in real Chromium at the 1920x1280 design viewport (see
  * src/app/App.layout.browser.test.tsx for why jsdom cannot make these
  * assertions). Extends that shell-level check to this tab's active
- * (embed-mounted) state specifically, since the generic per-tab loop there
- * only ever exercises each tab's idle render.
+ * (conversation-mounted) state specifically, since the generic per-tab loop
+ * there only ever exercises each tab's idle render.
  *
- * Deliberately does NOT wait for the embedded iframe to finish loading --
- * this asserts on CSS box geometry (a replaced element's box does not grow
- * with its content), not on the live third-party page, so it stays fast and
- * network-independent.
+ * Tapping Start here does trigger a real (unmocked) call to Copilot Studio's
+ * public token endpoint -- there is no env var or secret to withhold, since
+ * agentConfig.DIRECT_LINE_PROVISION_TOKEN_URL is a public constant. This test
+ * deliberately does NOT await that connection either way (same discipline as
+ * the pre-2026-09-10 iframe-embed version of this file): the End button and
+ * CSS box geometry it asserts on render immediately regardless of connection
+ * outcome, so this test stays fast and does not flake on network conditions.
  */
 const MIN_TOUCH_TARGET = 64;
 
@@ -44,7 +47,7 @@ describe('Voice Assistant tab layout at 1920x1280', () => {
     expectNoOverflow('voice-assistant idle');
   });
 
-  it('does not scroll once the embed is mounted (FR-006, active state)', async () => {
+  it('does not scroll once the conversation panel is mounted (FR-006, active state)', async () => {
     const user = userEvent.setup();
     render(
       <KioskProvider>
@@ -53,11 +56,11 @@ describe('Voice Assistant tab layout at 1920x1280', () => {
     );
 
     await user.click(screen.getByRole('tab', { name: new RegExp(meta.label.en) }));
-    await user.click(
-      screen.getByRole('button', { name: voiceAssistantStrings.en.startButton }),
-    );
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.startButton }));
 
-    expect(screen.getByTitle(meta.label.en)).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: voiceAssistantStrings.en.endButton }),
+    ).toBeInTheDocument();
     expectNoOverflow('voice-assistant active');
   });
 
@@ -80,7 +83,9 @@ describe('Voice Assistant tab layout at 1920x1280', () => {
 
     await user.click(startButton);
 
-    const endButton = screen.getByRole('button', { name: voiceAssistantStrings.en.endButton });
+    const endButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.endButton,
+    });
     const endRect = endButton.getBoundingClientRect();
     expect(endRect.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
     expect(endRect.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);

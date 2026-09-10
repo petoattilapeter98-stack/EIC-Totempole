@@ -32,9 +32,10 @@ export interface KioskState {
    * Re-arms the idle countdown without resetting active tab/locale state.
    *
    * Exposed for features that need to keep the countdown alive during a
-   * genuine, ongoing interaction useIdleReset's own document-level listeners
-   * cannot see (e.g. focus inside a cross-origin iframe -- see
-   * src/tabs/voice-assistant/useIframeIdleKeepalive.ts).
+   * genuine, ongoing interaction useIdleReset's own document-level
+   * pointerdown/keydown listeners cannot see (e.g. a recognized utterance or
+   * an assistant reply during a voice conversation -- see
+   * src/tabs/voice-assistant/VoiceConversation.tsx).
    */
   readonly reset: () => void;
 
