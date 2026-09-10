@@ -1,8 +1,5 @@
-import { TabPlaceholder } from '../../components/TabPlaceholder/TabPlaceholder';
+import GuestWifi from './GuestWifi';
 import { meta } from './meta';
 
 export { meta };
-
-export default function GuestWifi() {
-  return <TabPlaceholder meta={meta} />;
-}
+export default GuestWifi;

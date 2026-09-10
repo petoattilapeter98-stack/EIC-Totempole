@@ -1,0 +1,388 @@
+/*
+ * Guest Wi-Fi panel layout.
+ * specs/004-guest-wifi/contracts/visual-theme.md
+ *
+ * Uses the SAME white card surface every other tab renders into
+ * (App.module.css `.content`: --color-surface, with its own border/radius/
+ * shadow/padding already applied there) — no local background override, so
+ * this panel reads as consistent with Board Agenda, Local Transit, Company
+ * Highlights and Restaurants rather than standing apart from them.
+ *
+ * The "glowing/immersive" identity comes from an ambient colour wash that
+ * drifts across the WHOLE panel (below) — not a halo confined to the QR
+ * code. Two soft blobs, positioned like AmbientAurora's (blue leads, orange
+ * is the warm counterpoint), sit behind all real content.
+ *
+ * The QR plate's own colours (#FFFFFF / #000000) are set as inline SVG
+ * attributes in GuestWifi.tsx, NOT here — nothing in this file may ever style
+ * the plate's fill, which is the whole point of Clarifications 2026-09-10 Q1.
+ */
+
+.root {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Whole-panel ambient glow
+ *
+ * Two blobs anchored at opposite corners of the ENTIRE panel (not just the
+ * QR plate), so the glow reads as part of the panel itself rather than a
+ * decoration stuck to one element. Only opacity/transform animate
+ * (compositor-only, matching AmbientAurora's reasoning about a multi-day
+ * kiosk) — nothing needs to stop it, it simply ceases to exist on unmount
+ * (research R4).
+ *
+ * Opacity stays low (0.16-0.26) because this now washes across a much larger
+ * area that sits directly behind body text, not just a small halo next to a
+ * plate — bold colour here would fight the credential text for attention and
+ * risk contrast, not just look busy. `z-index: 0` plus every real content
+ * element getting its own stacking context (below) is what keeps the wash
+ * behind the text rather than painting over it, since an absolutely
+ * positioned pseudo-element otherwise paints above static in-flow content
+ * regardless of source order.
+ * ------------------------------------------------------------------------- */
+.root::before,
+.root::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  border-radius: var(--radius-3xl);
+  pointer-events: none;
+}
+
+.root::before {
+  inset: -3rem -3rem 40% -3rem;
+  background: radial-gradient(ellipse at 20% 15%, var(--brand-blue) 0%, transparent 60%);
+  animation: gw-drift-a var(--motion-pulse) ease-in-out infinite alternate;
+}
+
+.root::after {
+  inset: 40% -3rem -3rem -3rem;
+  background: radial-gradient(ellipse at 80% 85%, var(--brand-orange) 0%, transparent 60%);
+  animation: gw-drift-b var(--motion-float) ease-in-out infinite alternate-reverse;
+}
+
+@keyframes gw-drift-a {
+  from {
+    opacity: 0.16;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0.26;
+    transform: translate3d(1rem, 0.5rem, 0) scale(1.08);
+  }
+}
+
+@keyframes gw-drift-b {
+  from {
+    opacity: 0.16;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0.24;
+    transform: translate3d(-1rem, -0.5rem, 0) scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root::before,
+  .root::after {
+    animation: none;
+    opacity: 0.18;
+  }
+}
+
+.headerRow {
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+/* Constitution III: the button's own box IS the 64px target, via
+   min-height/padding — never a transparent overlay (matches restaurant-map's
+   .stateToggle convention). */
+.editButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-5);
+
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.actionIcon {
+  flex-shrink: 0;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* ---------------------------------------------------------------------------
+ * Edit form — the on-screen network editor. An inline state change within
+ * this same panel (Constitution IV: no modal, no route), replacing the QR/
+ * credentials body (or the fallback) while open.
+ * ------------------------------------------------------------------------- */
+.editForm {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  flex: 1;
+  min-height: 0;
+  max-width: 34rem;
+  overflow-y: auto;
+}
+
+.editHeading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.fieldLabel {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* Touch-friendly height for on-screen-keyboard entry, matching the 64px
+   minimum every other interactive element on this kiosk uses. */
+.fieldInput {
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-4);
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.fieldInput:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.fieldError {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--brand-orange-ink);
+}
+
+.securityToggle {
+  display: flex;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.securityOption {
+  flex: 1;
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-4);
+
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.securityOption[aria-pressed='true'] {
+  background: var(--accent-blue-soft);
+  border-color: var(--accent-blue-border);
+  color: var(--accent-blue);
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.cancelButton,
+.saveButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-6);
+
+  border-radius: var(--radius-xl);
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancelButton {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  color: var(--color-text-muted);
+}
+
+.saveButton {
+  background: var(--color-active-bg);
+  border: 1px solid var(--color-active-bg);
+  color: var(--color-active-fg);
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-10);
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.qrPlate {
+  display: block;
+  flex-shrink: 0;
+  width: 20rem;
+  height: 20rem;
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-raised);
+}
+
+/* ---------------------------------------------------------------------------
+ * Printed credentials (FR-003) — always visible, no tap required.
+ *
+ * Sized for the worst case the protocol actually allows (research R6): a
+ * 32-byte SSID and a 63-character password, each capped at two lines via
+ * `-webkit-line-clamp` rather than truncated, so no legal value is ever cut
+ * off (Constitution II) — see GuestWifi.browser.test.tsx.
+ * ------------------------------------------------------------------------- */
+.credentials {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-width: 0;
+  max-width: 28rem;
+}
+
+.instruction {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.credentialList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+}
+
+.credentialRow {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-lg);
+}
+
+.credentialLabel {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.credentialValue {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+  word-break: break-word;
+
+  /* Two lines, never a scrollbar (Constitution II) — a legal 32/63-char
+     value wraps at most this far at the panel's minimum width. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+ * Fallback — FR-014, shown when WIFI_CONFIG.ssid is '' (not configured).
+ * ------------------------------------------------------------------------- */
+.fallback {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-4);
+  flex: 1;
+  min-height: 0;
+  text-align: center;
+}
+
+.fallbackHeading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.fallbackBody {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
