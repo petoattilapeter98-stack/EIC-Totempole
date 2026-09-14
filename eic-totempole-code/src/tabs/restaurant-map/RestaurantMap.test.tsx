@@ -271,3 +271,36 @@ describe('RestaurantMap load race and fallback (US3)', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 });
+
+// ---------------------------------------------------------------------------
+// 004-tic-tac-toe EnlargedView migration guards
+// ---------------------------------------------------------------------------
+
+describe('RestaurantMap EnlargedView migration (004 E10)', () => {
+  it('does not remount the map frame across expand and collapse', async () => {
+    const user = userEvent.setup();
+    renderMap();
+
+    const frame = screen.getByTitle(STRINGS.mapFrameTitle.en);
+
+    await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
+    expect(screen.getByTitle(STRINGS.mapFrameTitle.en)).toBe(frame);
+
+    await user.click(screen.getByRole('button', { name: STRINGS.collapseLabel.en }));
+    expect(screen.getByTitle(STRINGS.mapFrameTitle.en)).toBe(frame);
+  });
+
+  it('carries data-enlarged-view only while expanded, and never data-attract-exempt', async () => {
+    const user = userEvent.setup();
+    renderMap();
+
+    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
+    expect(document.querySelector('[data-enlarged-view]')).not.toBeNull();
+    expect(document.querySelector('[data-attract-exempt]')).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: STRINGS.collapseLabel.en }));
+    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+  });
+});

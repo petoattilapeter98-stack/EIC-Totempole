@@ -1,10 +1,20 @@
 /*
  * Restaurant map layout.
  * specs/003-restaurant-map/contracts/view-states.md §1
+ * specs/004-tic-tac-toe/contracts/enlarged-view.md
  *
  * Two display states share this file:
  *   .root            default — map + companion list inside the content region
  *   .root.expanded   full viewport, list hidden (FR-024, FR-029)
+ *
+ * The full-viewport PANEL itself (position: fixed, padding, background, the
+ * return control) is now owned by the shared `EnlargedView` component, not by
+ * this file — see src/components/EnlargedView/. `.root.expanded` here only
+ * adjusts THIS tab's own inner state (hiding the list pane, which already
+ * happens by not rendering `<section>` — see the component). `.mapArea`
+ * remains this feature's own box (border, background, overflow) and is
+ * EnlargedView's child in both display states, never re-parented (contract
+ * E10), so the map's iframe never reloads on expand/collapse.
  *
  * The no-scroll guarantee (Constitution II) is structural here, not tuned:
  * every flexible box carries `min-height: 0` / `min-width: 0`, because grid and
@@ -24,35 +34,9 @@
   min-width: 0;
 }
 
-/* ---------------------------------------------------------------------------
- * Expanded state
- *
- * `position: fixed` — NOT a portal, NOT a <dialog>. The element stays in this
- * module's React subtree and announces no dialog semantics, so it remains an
- * inline state change rather than a modal (Constitution IV, contract rule S2).
- *
- * The shell's `.shell { overflow: hidden }` means this can never introduce
- * scrolling.
- *
- * KNOWN TRANSIENT: ContentRegion's `.enter` animation applies a `transform` for
- * 0.34s on every tab change, and a transformed ancestor becomes the containing
- * block for `position: fixed` descendants. Expanding within that window renders
- * this panel inset to the content region before snapping to the viewport when
- * the animation ends. It is bounded to 340ms after arriving on the tab and
- * self-corrects. The only complete fix is a portal, which contract rule S2
- * forbids — it would leave this module's subtree and read as a modal. Measured
- * in RestaurantMap.browser.test.tsx after the animation settles, which is the
- * steady state a visitor actually interacts with.
- * ------------------------------------------------------------------------- */
 .root.expanded {
-  position: fixed;
-  inset: 0;
-  z-index: 20;
-
   grid-template-columns: 1fr;
   gap: 0;
-  padding: var(--space-6);
-  background: var(--color-surface);
 }
 
 .mapArea {
@@ -66,6 +50,17 @@
   background: var(--color-surface-sunken);
 }
 
+/*
+ * While EnlargedView is active, this box's parent is its fixed, padded panel
+ * (which has a definite height from `inset: 0`), and this is the panel's only
+ * child — so it must claim the full available box itself rather than relying
+ * on grid stretch, which no longer applies once EnlargedView takes the map
+ * out of `.root`'s grid via `position: fixed` (contract E1).
+ */
+.root.expanded .mapArea {
+  height: 100%;
+}
+
 .frame {
   display: block;
   width: 100%;
@@ -74,12 +69,13 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Expand / collapse control
+ * Expand control
  *
  * Constitution III: the button's OWN box is the 64px target, formed by
- * min-height/min-width plus padding — never a transparent overlay. It is
- * persistently visible and never fades or auto-hides: while expanded, this is
- * the visitor's only way back to the nav (FR-025, contract rule S3).
+ * min-height/min-width plus padding — never a transparent overlay. The
+ * matching return control, present only in the expanded state, is
+ * EnlargedView's own (contract E4, E5) — this is the map's counterpart,
+ * present only in the default state.
  * ------------------------------------------------------------------------- */
 .stateToggle {
   position: absolute;
