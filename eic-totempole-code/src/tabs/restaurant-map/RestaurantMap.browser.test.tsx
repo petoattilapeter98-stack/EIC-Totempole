@@ -225,20 +225,23 @@ describe('Restaurant map layout at 1920x1280', () => {
     closeTo(box.height, 64, 1);
   });
 
-  it('renders five nav tabs without overflow (research R7)', async () => {
+  it('renders six nav tabs without overflow (research R7, 004 R7)', async () => {
     const user = userEvent.setup();
     await openMapTab(user);
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(5);
+    // Updated from 5 to 6 when 004-tic-tac-toe added a sixth tab; re-measured
+    // to confirm the auto-columns nav (research R7) still fits every label
+    // without wrapping or overflow at 1920x1280.
+    expect(tabs).toHaveLength(6);
 
     for (const tab of tabs) {
       const box = tab.getBoundingClientRect();
       // The hardcoded repeat(4, 1fr) this replaced would have squeezed or
-      // wrapped the fifth tab.
+      // wrapped the fifth tab, and would break again with a sixth.
       expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
       expect(box.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
     }
-    expectNoOverflow('five-tab nav');
+    expectNoOverflow('six-tab nav');
   });
 });
