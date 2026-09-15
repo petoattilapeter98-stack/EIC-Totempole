@@ -39,6 +39,29 @@ const SETTLE_MS = 500;
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, SETTLE_MS));
 
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
+}
+
+/**
+ * Wait for ContentRegion's 0.34s entry animation before measuring anything.
+ *
+ * It applies a `transform` to the tabpanel, and a transformed ancestor changes
+ * what descendants are measured against. Row HEIGHTS survive a translate and
+ * gaps are differences that cancel it out, so this file's assertions happen to
+ * be immune - but "happens to be immune" is not a property to rely on, and the
+ * neighbouring restaurant-map suite fails outright on the same transform.
+ *
+ * Scoped to the panel element: `document.getAnimations()` never settles here
+ * because AmbientAurora runs infinite animations.
+ */
+async function settleEntry() {
+  await nextFrame();
+  const panel = screen.getByRole('tabpanel');
+  await Promise.all(panel.getAnimations().map((a) => a.finished.catch(() => undefined)));
+  await nextFrame();
+}
+
 function expectNoOverflow(label: string) {
   const el = document.documentElement;
   expect(el.scrollHeight, `${label}: vertical overflow`).toBeLessThanOrEqual(el.clientHeight);
@@ -60,14 +83,16 @@ function renderApp() {
 }
 
 describe('Board Agenda accordion at 1920x1280', () => {
-  it('renders one toggle per session', () => {
+  it('renders one toggle per session', async () => {
     renderApp();
+    await settleEntry();
     expect(rowButtons()).toHaveLength(agenda.sessions.length);
   });
 
   it('never scrolls the page with any session expanded (FR-020, SC-004)', async () => {
     const user = userEvent.setup();
     renderApp();
+    await settleEntry();
 
     expectNoOverflow('all collapsed');
 
@@ -95,6 +120,7 @@ describe('Board Agenda accordion at 1920x1280', () => {
     // Constitution III floor.
     const user = userEvent.setup();
     renderApp();
+    await settleEntry();
 
     await user.click(rowButtons()[0]!);
     await settle();
@@ -111,6 +137,7 @@ describe('Board Agenda accordion at 1920x1280', () => {
   it('keeps 16px between adjacent row targets (FR-021, SC-008)', async () => {
     const user = userEvent.setup();
     renderApp();
+    await settleEntry();
 
     const check = (label: string) => {
       const rects = rowButtons().map((el) => el.getBoundingClientRect());
@@ -133,6 +160,7 @@ describe('Board Agenda accordion at 1920x1280', () => {
     // pointless.
     const user = userEvent.setup();
     renderApp();
+    await settleEntry();
 
     const button = rowButtons()[0]!;
     const collapsedHeight = button.closest('li')!.getBoundingClientRect().height;

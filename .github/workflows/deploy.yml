@@ -12,6 +12,9 @@ on:
     paths:
       - "eic-totempole-code/**"
       - ".github/workflows/deploy.yml"
+      # The shared build/test definition: a change to how main is verified must
+      # itself be verified on main.
+      - ".github/workflows/build-test.yml"
       - ".github/actions/deploy-to-s3/**"
   workflow_dispatch: {}
 
@@ -22,37 +25,12 @@ concurrency:
   group: deploy-main
   cancel-in-progress: false
 
-defaults:
-  run:
-    working-directory: eic-totempole-code
-
 jobs:
+  # Same reusable workflow the PR gate runs, so "green on the PR" and "green on
+  # main" cannot mean two different things. It publishes the kiosk-dist artifact
+  # the deploy jobs below consume.
   build:
-    name: Build & test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: eic-totempole-code/package-lock.json
-
-      - run: npm ci
-
-      # Only the browser-mode layout project needs a real browser.
-      - run: npx playwright install --with-deps chromium
-
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run build
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kiosk-dist
-          path: eic-totempole-code/dist
-          retention-days: 7
+    uses: ./.github/workflows/build-test.yml
 
   deploy-development:
     name: Deploy to development
