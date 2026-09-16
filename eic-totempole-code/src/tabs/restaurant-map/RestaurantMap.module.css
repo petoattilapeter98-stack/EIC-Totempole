@@ -1,0 +1,287 @@
+/*
+ * Restaurant map layout.
+ * specs/003-restaurant-map/contracts/view-states.md §1
+ *
+ * Two display states share this file:
+ *   .root            default — map + companion list inside the content region
+ *   .root.expanded   full viewport, list hidden (FR-024, FR-029)
+ *
+ * The no-scroll guarantee (Constitution II) is structural here, not tuned:
+ * every flexible box carries `min-height: 0` / `min-width: 0`, because grid and
+ * flex children default to `min-*: auto` and refuse to shrink below their
+ * intrinsic size — the single most common cause of a 1fr row overflowing.
+ */
+
+.root {
+  display: grid;
+  /* Map takes the space; the list is sized by its content and never squeezed
+     below what 8 single-line rows need. */
+  grid-template-columns: 1fr minmax(20rem, 24rem);
+  gap: var(--space-6);
+
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Expanded state
+ *
+ * `position: fixed` — NOT a portal, NOT a <dialog>. The element stays in this
+ * module's React subtree and announces no dialog semantics, so it remains an
+ * inline state change rather than a modal (Constitution IV, contract rule S2).
+ *
+ * The shell's `.shell { overflow: hidden }` means this can never introduce
+ * scrolling.
+ *
+ * KNOWN TRANSIENT: ContentRegion's `.enter` animation applies a `transform` for
+ * 0.34s on every tab change, and a transformed ancestor becomes the containing
+ * block for `position: fixed` descendants. Expanding within that window renders
+ * this panel inset to the content region before snapping to the viewport when
+ * the animation ends. It is bounded to 340ms after arriving on the tab and
+ * self-corrects. The only complete fix is a portal, which contract rule S2
+ * forbids — it would leave this module's subtree and read as a modal. Measured
+ * in RestaurantMap.browser.test.tsx after the animation settles, which is the
+ * steady state a visitor actually interacts with.
+ * ------------------------------------------------------------------------- */
+.root.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
+  grid-template-columns: 1fr;
+  gap: 0;
+  padding: var(--space-6);
+  background: var(--color-surface);
+}
+
+.mapArea {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface-sunken);
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Expand / collapse control
+ *
+ * Constitution III: the button's OWN box is the 64px target, formed by
+ * min-height/min-width plus padding — never a transparent overlay. It is
+ * persistently visible and never fades or auto-hides: while expanded, this is
+ * the visitor's only way back to the nav (FR-025, contract rule S3).
+ * ------------------------------------------------------------------------- */
+.stateToggle {
+  position: absolute;
+  top: var(--touch-gap-min);
+  right: var(--touch-gap-min);
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: var(--space-4) var(--space-5);
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.toggleIcon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  color: var(--accent-color);
+}
+
+.toggleLabel {
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+ * Companion list — the only accessible, localized representation of the
+ * restaurant names (FR-030).
+ * ------------------------------------------------------------------------ */
+.listPane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-height: 0;
+  min-width: 0;
+  /* No scrolling: the 8-entry cap (FR-031) is what keeps this honest. If this
+     ever overflows, the fix is fewer restaurants, not a scrollbar. */
+  overflow: hidden;
+}
+
+.listHeading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.listSubheading {
+  margin-top: calc(var(--space-2) * -1);
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/*
+ * One line per row (FR-038). This is what makes 8 entries fit the content
+ * region beside the map — it is a layout guarantee, not a style preference.
+ */
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+
+  background: var(--color-surface-sunken);
+  border-radius: var(--radius-lg);
+}
+
+/* The number is the whole link between a list entry and its map pin (FR-006),
+   so it reads as an identifier rather than decoration. */
+.marker {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: var(--radius-pill);
+
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.name {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  /* Truncate rather than wrap: wrapping would break the single-line rule and
+     push the eighth entry out of the region. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Only rendered when the map is unavailable, where the map area is free. */
+.address {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+}
+
+.walk {
+  flex-shrink: 0;
+  margin-left: auto;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+ * Loading and fallback
+ * ------------------------------------------------------------------------ */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: var(--text-xl);
+  color: var(--color-text-muted);
+  background: var(--color-surface-sunken);
+}
+
+/*
+ * Laid out for BOTH display states: a visitor can expand the map before the
+ * load race resolves, so this must render correctly at full-viewport size too
+ * without stretching a short list into an unreadable band.
+ */
+.fallback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  align-items: center;
+  justify-content: center;
+
+  height: 100%;
+  min-height: 0;
+  padding: var(--space-8);
+  overflow: hidden;
+}
+
+.fallback .list {
+  width: 100%;
+  max-width: 40rem;
+}
+
+.fallbackHeading {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.fallbackBody {
+  font-size: var(--text-base);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* Visually hidden, still announced — carries the full "minutes on foot" phrase
+   while the visible text stays a compact "5 min" (Constitution VII). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

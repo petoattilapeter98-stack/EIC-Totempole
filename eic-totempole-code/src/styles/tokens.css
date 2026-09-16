@@ -186,4 +186,9 @@
   --motion-pulse: 2.4s;
   --motion-float: 6s;
   --transition-touch: 0.22s var(--ease-out-expo);
+
+  /* Panels opening and closing in place. Slower than --transition-touch because
+     it moves real layout: at 220ms a region resizing reads as a glitch, at
+     320ms as the panel making room. */
+  --motion-accordion: 0.32s var(--ease-out-expo);
 }

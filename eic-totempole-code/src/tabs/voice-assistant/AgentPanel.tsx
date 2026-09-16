@@ -24,7 +24,7 @@ type AgentPanelStatus = 'idle' | 'active';
  * (research.md R6).
  */
 export function AgentPanel() {
-  const { locale, reset } = useKiosk();
+  const { locale, signalActivity } = useKiosk();
   const s = getVoiceAssistantStrings(locale);
   const [status, setStatus] = useState<AgentPanelStatus>('idle');
 
@@ -62,7 +62,7 @@ export function AgentPanel() {
       ) : (
         <div className={styles.active}>
           <div className={styles.conversationWrap}>
-            <VoiceConversation locale={locale} reset={reset} />
+            <VoiceConversation locale={locale} reset={signalActivity} />
           </div>
           <button
             type="button"

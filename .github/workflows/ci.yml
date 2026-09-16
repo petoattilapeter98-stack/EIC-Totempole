@@ -1,0 +1,40 @@
+name: CI
+
+# The merge gate. Runs on every pull request into main, and re-runs on every
+# push to that PR's branch.
+#
+# NOTE: this file makes the check RUN. It does not make it REQUIRED - only a
+# branch protection rule / ruleset can block a merge, and that is a repository
+# setting rather than anything a workflow can grant itself. See
+# .github/BRANCH_PROTECTION.md for the exact check name and setup.
+on:
+  pull_request:
+    branches: [main]
+  # Lets the gate be re-run by hand against a branch without pushing a commit,
+  # e.g. to confirm a fix to a flaky test.
+  workflow_dispatch: {}
+
+# Supersede the previous run when a PR is pushed to again: only the newest
+# commit's result can gate the merge, so older runs are wasted minutes.
+#
+# The opposite of deploy.yml's policy, deliberately - cancelling an in-flight
+# DEPLOY would leave an environment half-updated, while cancelling an in-flight
+# TEST costs nothing.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+# Read-only. The gate needs nothing else, and a token that cannot write cannot
+# be turned into one by a malicious dependency during `npm ci`.
+permissions:
+  contents: read
+
+jobs:
+  # Deliberately NO `paths:` filter on the trigger above, and none here.
+  #
+  # A required check that is skipped never reports, and GitHub treats a check
+  # that never reports as still pending - so a docs-only PR would sit forever on
+  # "Expected - Waiting for status to be reported" with no way to merge. Running
+  # the suite on every PR costs a few minutes and has no such failure mode.
+  verify:
+    uses: ./.github/workflows/build-test.yml

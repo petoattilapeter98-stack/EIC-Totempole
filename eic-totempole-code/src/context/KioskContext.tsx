@@ -29,15 +29,22 @@ export interface KioskState {
   readonly remainingSeconds: number;
 
   /**
-   * Re-arms the idle countdown without resetting active tab/locale state.
+   * Report that a visitor is active, restarting the idle countdown.
    *
-   * Exposed for features that need to keep the countdown alive during a
-   * genuine, ongoing interaction useIdleReset's own document-level
-   * pointerdown/keydown listeners cannot see (e.g. a recognized utterance or
-   * an assistant reply during a voice conversation -- see
+   * The document-level pointerdown/keydown listeners in `useIdleReset` cover
+   * every normal interaction, so nothing needs this for ordinary UI. It exists
+   * for interaction the parent document CANNOT observe — e.g. touches inside
+   * a cross-origin iframe (delivered to the frame's own document, never
+   * reaching ours) or a recognized utterance/assistant reply during a
+   * hands-free voice conversation (see
    * src/tabs/voice-assistant/VoiceConversation.tsx).
+   *
+   * Exposed as a public capability rather than letting a feature reach into the
+   * idle hook or dispatch synthetic events at `document` (Constitution IX).
+   * Callers MUST bound how long they will keep calling it: an activity signal
+   * that fails "stuck on" would hold an unattended display awake indefinitely.
    */
-  readonly reset: () => void;
+  readonly signalActivity: () => void;
 
   /**
    * True once nobody has touched the kiosk for ATTRACT_AFTER_SECONDS.
@@ -100,7 +107,7 @@ export function KioskProvider({
     setActiveTab(DEFAULT_TAB_ID);
   }, []);
 
-  const { remainingSeconds, idleSeconds, hasInteracted, reset } = useIdleReset({
+  const { remainingSeconds, idleSeconds, hasInteracted, reset: signalActivity } = useIdleReset({
     durationSeconds: idleTimeoutSeconds,
     onExpire: resetInteractionState,
   });
@@ -121,10 +128,18 @@ export function KioskProvider({
       toggleLocale,
       resetInteractionState,
       remainingSeconds,
-      reset,
+      signalActivity,
       isAttract,
     }),
-    [activeTab, locale, toggleLocale, resetInteractionState, remainingSeconds, reset, isAttract],
+    [
+      activeTab,
+      locale,
+      toggleLocale,
+      resetInteractionState,
+      remainingSeconds,
+      signalActivity,
+      isAttract,
+    ],
   );
 
   return <KioskContext.Provider value={value}>{children}</KioskContext.Provider>;
