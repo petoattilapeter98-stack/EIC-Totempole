@@ -1,36 +1,32 @@
 <!--
 Sync Impact Report
-Version change: [none — template scaffold, all placeholders] → 1.0.0
-Rationale: Initial ratification. The prior file was the unfilled constitution-template
-scaffold; this is the first concrete constitution for the project, so it is treated as a
-MAJOR (1.0.0) baseline rather than an amendment.
+Version change: 1.0.0 → 1.1.0
+Rationale: MINOR — materially expands existing guidance on Principle IV with a new,
+narrowly-scoped exception, rather than removing or redefining the principle's core
+guarantee (no route changes, no modals, no popups for application content all still
+hold). Triggered by feature 003 (voice-info-agent): its Copilot Studio agent is now
+published requiring Microsoft/Entra sign-in, and Microsoft's login page refuses to
+render inside an iframe (verified: it cannot be embedded), making inline
+authentication technically impossible, not merely undesirable.
 
-Modified principles: n/a (no prior named principles existed)
+Modified principles:
+  - IV. Single-Page, Inline-Only Updates — added a "Narrow exception — unavoidable
+    third-party identity sign-in" subsection permitting a user-initiated popup solely
+    to complete sign-in with a provider whose login page cannot be iframed, with
+    explicit guardrails (user-gesture-only, sign-in-only, must document the provider
+    and technical reason in plan.md, no extension to other interactions).
 
-Added sections:
-  - Core Principles I–IX (Kiosk-First Hardware Target, Fixed 3:2 Viewport / No Scroll,
-    Touch Target Sizing, Single-Page Inline Updates, Unattended Reliability,
-    Zero Client-Side Secrets, Accessibility Baseline, Static-First Delivery,
-    Modular Feature Isolation)
-  - Platform & Environment Constraints
-  - Quality Gates & Development Workflow
-  - Governance
+Added sections: none (subsection added within existing Principle IV)
 
 Removed sections: none
 
-Deferred / TODO placeholders:
-  - RATIFICATION_DATE set to the date this constitution was first adopted (2026-09-04),
-    based on the date this document was authored. If the project's actual founding /
-    kickoff date differs, update this field — no other prior date was available in the
-    repository to derive it from.
+Deferred / TODO placeholders: none
 
 Templates requiring follow-up review (not modified by this command; flagged for the
 next command in the workflow that touches them):
-  - .specify/templates/plan-template.md — should reference the Constitution Check gates
-    implied by principles II, III, V, VIII (viewport/no-scroll, touch targets,
-    unattended reliability, module isolation) once a feature plan is drafted. ⚠ pending
-  - .specify/templates/spec-template.md — no changes required; remains generic.
-  - .specify/templates/tasks-template.md — no changes required; remains generic.
+  - .specify/templates/plan-template.md — Constitution Check section for any future
+    feature touching Principle IV should note whether this popup exception applies and,
+    if so, cite the specific provider/technical reason per the exception's requirement.
 -->
 
 # EIC Totempole Kiosk Constitution
@@ -84,6 +80,30 @@ section, or state change within the single page.
 **Rationale**: Modals and route changes assume a user who can dismiss, navigate
 back, or get lost — none of which apply to an unattended public kiosk, where the
 only recoverable state is "the one page, in a known layout."
+
+**Narrow exception — unavoidable third-party identity sign-in**: A feature MAY
+open a popup window strictly to complete a sign-in flow with a third-party
+identity provider (e.g. Microsoft/Entra ID) when, and only when, that provider's
+own login page technically refuses to render inside an iframe (e.g. it sends
+`X-Frame-Options`/`frame-ancestors` denying embedding) — a fact verified by
+inspection, not assumed. This exception covers only the sign-in step itself:
+- The popup MUST be triggered by an explicit visitor/operator action (a click),
+  never opened automatically without one.
+- The popup MUST be used solely to establish or refresh a sign-in session; it
+  MUST NOT be used to display ordinary application content, navigation, or any
+  content this application itself controls.
+- The feature MUST otherwise still satisfy every other constraint in this
+  principle (single page, no route changes, no other modals) and every other
+  Core Principle (touch targets, no-scroll, reliability, etc.) for everything
+  outside that one popup.
+- The feature's plan.md MUST record which provider requires this, the specific
+  technical reason (e.g. the observed frame-blocking header/behavior), and MUST
+  NOT extend the exception to any other interaction "for convenience."
+**Rationale**: Some identity providers make inline authentication technically
+impossible, not merely undesirable, precisely to prevent clickjacking of their
+login page. Refusing to ever allow a popup would make such providers entirely
+unusable from this kiosk, which is a worse outcome than a narrowly-scoped,
+user-initiated exception that changes nothing about the rest of the principle.
 
 ### V. Unattended Multi-Day Reliability
 The application MUST run continuously for multiple days without a page reload.
@@ -171,6 +191,11 @@ display.
 - **Removability check**: a new feature MUST be reviewed for whether it can be
   disabled/removed without code changes elsewhere; cross-feature coupling found
   during review MUST be refactored before merge, not deferred.
+- **Popup-exception audit**: any change that opens a popup under Principle IV's
+  narrow identity sign-in exception MUST show, in its plan.md, the specific
+  provider and the verified technical reason the login page cannot be iframed,
+  and MUST NOT be reused to justify a popup for anything other than that sign-in
+  step.
 
 ## Governance
 
@@ -196,4 +221,4 @@ Gates above at review time; this constitution is the reference document for
 resolving disagreements about whether a design or implementation is acceptable
 for this kiosk.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-04 | **Last Amended**: 2026-09-04
+**Version**: 1.1.0 | **Ratified**: 2026-09-04 | **Last Amended**: 2026-09-09

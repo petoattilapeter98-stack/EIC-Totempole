@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { App } from '../../app/App';
 import { KioskProvider } from '../../context/KioskContext';
+import { TABS } from '../registry';
 import { RESTAURANTS } from './restaurants.static';
 import { STRINGS } from './strings';
 
@@ -159,20 +160,20 @@ describe('Restaurant map layout at 1920x1280', () => {
     expect(box?.height).toBe(window.innerHeight);
   });
 
-  it('renders five nav tabs without overflow (research R7)', async () => {
+  it('renders one nav tab per registry entry without overflow (research R7)', async () => {
     const user = userEvent.setup();
     await openMapTab(user);
 
     const tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(5);
+    expect(tabs).toHaveLength(TABS.length);
 
     for (const tab of tabs) {
       const box = tab.getBoundingClientRect();
       // The hardcoded repeat(4, 1fr) this replaced would have squeezed or
-      // wrapped the fifth tab.
+      // wrapped tabs once the registry grew past four entries.
       expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
       expect(box.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
     }
-    expectNoOverflow('five-tab nav');
+    expectNoOverflow(`${TABS.length}-tab nav`);
   });
 });

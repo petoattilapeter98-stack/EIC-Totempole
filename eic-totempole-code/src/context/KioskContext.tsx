@@ -33,9 +33,11 @@ export interface KioskState {
    *
    * The document-level pointerdown/keydown listeners in `useIdleReset` cover
    * every normal interaction, so nothing needs this for ordinary UI. It exists
-   * for interaction the parent document CANNOT observe — today, touches inside
-   * a cross-origin iframe, which are delivered to the frame's own document and
-   * never reach ours.
+   * for interaction the parent document CANNOT observe — e.g. touches inside
+   * a cross-origin iframe (delivered to the frame's own document, never
+   * reaching ours) or a recognized utterance/assistant reply during a
+   * hands-free voice conversation (see
+   * src/tabs/voice-assistant/VoiceConversation.tsx).
    *
    * Exposed as a public capability rather than letting a feature reach into the
    * idle hook or dispatch synthetic events at `document` (Constitution IX).
