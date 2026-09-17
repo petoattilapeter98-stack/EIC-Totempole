@@ -71,11 +71,10 @@ local computation and storage, not a backend).
 
 ## 4. Edit form UI
 
-- **Password field is `type="text"`, not `type="password"`.** The panel already prints the
-  password in plaintext for every visitor to read (spec Assumptions); masking it only while
-  typing would add friction (and a "reveal" affordance to build) for zero actual privacy gain,
-  since the same value is shown in the clear the moment the operator taps Save. This is a
-  deliberate consistency choice, not an oversight.
+- **Password field is masked, revealed only while focused.** The display panel masks the
+  password behind a fixed-length mask until a visitor taps it, so the edit field matches: it is
+  `type="password"` at rest and switches to `type="text"` while focused, so the operator can see
+  what they are typing without the value sitting in the clear once they tap away.
 - **Security type is a two-button toggle** (`role="group"`, `aria-pressed` on each option),
   matching this kiosk's existing button-driven interaction style rather than a native `<select>`.
   Selecting "Open network" clears `draft.password` and unmounts the password input entirely —

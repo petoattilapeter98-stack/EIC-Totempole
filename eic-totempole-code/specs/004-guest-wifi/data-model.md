@@ -20,7 +20,7 @@ an already-resolved `config` prop — see [contracts/config-editing.md](contract
 | Field | Type | Constraints | Notes |
 |---|---|---|---|
 | `ssid` | `string` | 1–32 bytes when configured; `''` means "not configured" (research R7) | Network name, shown verbatim in both locales (spec FR-006) |
-| `password` | `string` | When `ssid !== ''`: 8–63 ASCII characters if `securityType === 'WPA'`, else `''`. Unconstrained when `ssid === ''` (not configured) | Never translated, never masked (spec Assumptions) |
+| `password` | `string` | When `ssid !== ''`: 8–63 ASCII characters if `securityType === 'WPA'`, else `''`. Unconstrained when `ssid === ''` (not configured) | Never translated. Masked on the panel until tapped; the edit field reveals it only while focused |
 | `securityType` | `'WPA' \| 'nopass'` | — | `'WPA'` covers WPA/WPA2/WPA3-Personal for QR-payload purposes (research R2); `'nopass'` is an open network. WEP is intentionally not offered — see Assumptions below |
 
 ```ts
