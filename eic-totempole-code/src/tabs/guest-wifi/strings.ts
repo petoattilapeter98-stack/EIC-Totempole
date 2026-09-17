@@ -42,6 +42,10 @@ export interface GuestWifiStrings {
   readonly ssidLengthError: LocalizedText;
   /** Inline error when the password is out of the 8-63 character range. */
   readonly passwordLengthError: LocalizedText;
+  /** Accessible name for the masked password while hidden — tapping reveals it. */
+  readonly showPasswordLabel: LocalizedText;
+  /** Accessible name for the revealed password — tapping hides it again. */
+  readonly hidePasswordLabel: LocalizedText;
 }
 
 export const STRINGS = {
@@ -63,6 +67,8 @@ export const STRINGS = {
   cancelButtonLabel: { en: 'Cancel', hu: 'Mégse' },
   ssidLengthError: { en: 'Enter 1–32 characters.', hu: 'Adjon meg 1–32 karaktert.' },
   passwordLengthError: { en: 'Enter 8–63 characters.', hu: 'Adjon meg 8–63 karaktert.' },
+  showPasswordLabel: { en: 'Show password', hu: 'Jelszó megjelenítése' },
+  hidePasswordLabel: { en: 'Hide password', hu: 'Jelszó elrejtése' },
 } as const satisfies GuestWifiStrings;
 
 /** Resolve every string for one locale, mirroring `getMapStrings(locale)`. */
@@ -83,5 +89,7 @@ export function getGuestWifiStrings(locale: Locale): Record<keyof GuestWifiStrin
     cancelButtonLabel: STRINGS.cancelButtonLabel[locale],
     ssidLengthError: STRINGS.ssidLengthError[locale],
     passwordLengthError: STRINGS.passwordLengthError[locale],
+    showPasswordLabel: STRINGS.showPasswordLabel[locale],
+    hidePasswordLabel: STRINGS.hidePasswordLabel[locale],
   };
 }

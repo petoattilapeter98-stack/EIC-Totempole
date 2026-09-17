@@ -295,19 +295,23 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Printed credentials (FR-003) — always visible, no tap required.
+ * Printed credentials (FR-003) — network name always visible; the password
+ * is masked until a visitor taps it (see .passwordToggle below).
  *
  * Sized for the worst case the protocol actually allows (research R6): a
  * 32-byte SSID and a 63-character password, each capped at two lines via
  * `-webkit-line-clamp` rather than truncated, so no legal value is ever cut
  * off (Constitution II) — see GuestWifi.browser.test.tsx.
  * ------------------------------------------------------------------------- */
+/* A fixed width, not sized to content: the column would otherwise shrink to
+   the 8-dot password mask and grow again when the password is revealed. At
+   28rem a worst-case 63-char password still fits in the two clamped lines. */
 .credentials {
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
+  flex: 0 1 28rem;
   min-width: 0;
-  max-width: 28rem;
 }
 
 .instruction {
@@ -357,6 +361,50 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* The masked password is a tap-to-reveal toggle. The button's own box is the
+   64px touch target (Constitution III); it inherits the credential typography
+   so the dots and the revealed value look like the network name beside it. */
+.passwordToggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--touch-target-min);
+  padding: 0;
+
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.passwordToggle:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+.passwordText {
+  min-width: 0;
+  word-break: break-word;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.passwordIcon {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--color-text-muted);
 }
 
 /* ---------------------------------------------------------------------------
