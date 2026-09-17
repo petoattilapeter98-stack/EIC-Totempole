@@ -41,11 +41,47 @@ describe('GuestWifiPanel QR plate (US1, contracts/visual-theme.md §2)', () => {
 // ---------------------------------------------------------------------------
 
 describe('GuestWifiPanel printed credentials (US2, spec Story 2 AC1)', () => {
-  it('shows the network name and password as plain visible text with no tap required', () => {
+  it('shows the network name as plain text and the password masked until tapped', () => {
     render(<GuestWifiPanel config={CONFIGURED} locale="en" onSave={noop} />);
 
     expect(screen.getByText(CONFIGURED.ssid)).toBeInTheDocument();
+    expect(screen.queryByText(CONFIGURED.password)).not.toBeInTheDocument();
+    expect(screen.getByTestId('wifi-password-value')).toHaveTextContent('••••••••');
+  });
+
+  it('uses a fixed-length mask so the hidden password does not leak its length', () => {
+    const long: GuestNetworkConfig = { ...CONFIGURED, password: 'x'.repeat(40) };
+    render(<GuestWifiPanel config={long} locale="en" onSave={noop} />);
+
+    expect(screen.getByTestId('wifi-password-value')).toHaveTextContent(/^•{8}$/);
+  });
+
+  it('reveals the password on tap and hides it again on a second tap', async () => {
+    const user = userEvent.setup();
+    render(<GuestWifiPanel config={CONFIGURED} locale="en" onSave={noop} />);
+
+    const toggle = screen.getByRole('button', { name: STRINGS.showPasswordLabel.en });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(toggle);
     expect(screen.getByText(CONFIGURED.password)).toBeInTheDocument();
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(toggle).toHaveAccessibleName(STRINGS.hidePasswordLabel.en);
+
+    await user.click(toggle);
+    expect(screen.queryByText(CONFIGURED.password)).not.toBeInTheDocument();
+    expect(toggle).toHaveAccessibleName(STRINGS.showPasswordLabel.en);
+  });
+
+  it('updates the QR code when the network changes', () => {
+    const { rerender } = render(<GuestWifiPanel config={CONFIGURED} locale="en" onSave={noop} />);
+    const before = screen.getByTestId('qr-plate-modules').getAttribute('d');
+
+    rerender(
+      <GuestWifiPanel config={{ ...CONFIGURED, password: 'differentpass' }} locale="en" onSave={noop} />,
+    );
+
+    expect(screen.getByTestId('qr-plate-modules').getAttribute('d')).not.toBe(before);
   });
 
   it('omits the password row for an open (nopass) network instead of showing an empty value', () => {
@@ -100,7 +136,7 @@ describe('GuestWifiPanel language switching (US3, spec Story 3 AC1, FR-006)', ()
 
     // Proper values, not translatable content — byte-identical in both locales.
     expect(screen.getByText(CONFIGURED.ssid)).toBeInTheDocument();
-    expect(screen.getByText(CONFIGURED.password)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: STRINGS.showPasswordLabel.hu })).toBeInTheDocument();
   });
 
   it('switches copy end-to-end, driven through the real kiosk language toggle', async () => {
@@ -144,6 +180,21 @@ describe('GuestWifiPanel on-screen editor (US4)', () => {
     expect(screen.getByLabelText(STRINGS.editHeading.en)).toBeInTheDocument();
     expect(screen.getByDisplayValue(CONFIGURED.ssid)).toBeInTheDocument();
     expect(screen.getByDisplayValue(CONFIGURED.password)).toBeInTheDocument();
+  });
+
+  it('masks the password input and reveals it only while the field is focused', async () => {
+    const user = userEvent.setup();
+    render(<GuestWifiPanel config={CONFIGURED} locale="en" onSave={noop} />);
+
+    await user.click(screen.getByRole('button', { name: STRINGS.editButtonLabel.en }));
+    const passwordInput = screen.getByDisplayValue(CONFIGURED.password);
+    expect(passwordInput).toHaveAttribute('type', 'password');
+
+    await user.click(passwordInput);
+    expect(passwordInput).toHaveAttribute('type', 'text');
+
+    await user.click(screen.getByDisplayValue(CONFIGURED.ssid));
+    expect(passwordInput).toHaveAttribute('type', 'password');
   });
 
   it('opens the editor from the not-configured fallback state too, so a first-time setup needs no code change', async () => {
@@ -276,6 +327,7 @@ describe('GuestWifi persists edits to this device (US4, research R8)', () => {
     );
 
     expect(screen.getByText('Persisted Network')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: STRINGS.showPasswordLabel.en }));
     expect(screen.getByText('persistedpass1')).toBeInTheDocument();
   });
 });

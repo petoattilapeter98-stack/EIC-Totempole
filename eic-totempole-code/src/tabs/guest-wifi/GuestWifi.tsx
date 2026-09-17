@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
-import { Check, Pencil, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Pencil, X } from 'lucide-react';
 
 import { useKiosk } from '../../context/KioskContext';
 import type { Locale } from '../../i18n/locales';
@@ -19,6 +19,12 @@ const QUIET_ZONE_MODULES = 4;
 /** Fixed QR plate colours — NEVER themed. See FR-002, Clarifications 2026-09-10 Q1. */
 const QR_LIGHT = '#FFFFFF';
 const QR_DARK = '#000000';
+
+/**
+ * Shown in place of a hidden password. Fixed length, deliberately — masking
+ * with one dot per character would still leak the password's length.
+ */
+const PASSWORD_MASK = '••••••••';
 
 /**
  * Renders a boolean module matrix as one compact `<path>` (batched, per
@@ -70,6 +76,37 @@ function QrPlate({ matrix }: QrPlateProps) {
   );
 }
 
+interface MaskedPasswordProps {
+  readonly password: string;
+  readonly strings: ReturnType<typeof getGuestWifiStrings>;
+}
+
+/**
+ * The printed password, hidden behind a fixed mask until a visitor taps it;
+ * tapping again hides it. A real `<button>` so it is reachable and announced
+ * as a toggle, not a click handler on static text. Reveal state is local, so
+ * it resets to hidden whenever the tab unmounts (tab change, attract mode).
+ */
+function MaskedPassword({ password, strings: s }: MaskedPasswordProps) {
+  const [isRevealed, setIsRevealed] = useState(false);
+  const Icon = isRevealed ? EyeOff : Eye;
+
+  return (
+    <button
+      type="button"
+      className={styles.passwordToggle}
+      aria-pressed={isRevealed}
+      aria-label={isRevealed ? s.hidePasswordLabel : s.showPasswordLabel}
+      onClick={() => setIsRevealed((r) => !r)}
+    >
+      <span className={styles.passwordText} data-testid="wifi-password-value">
+        {isRevealed ? password : PASSWORD_MASK}
+      </span>
+      <Icon className={styles.passwordIcon} aria-hidden="true" />
+    </button>
+  );
+}
+
 interface EditFormProps {
   readonly initial: GuestNetworkConfig;
   readonly strings: ReturnType<typeof getGuestWifiStrings>;
@@ -83,14 +120,14 @@ interface EditFormProps {
  * no route (Constitution IV) — exactly like every other state change in this
  * app.
  *
- * The password field is deliberately `type="text"`, not `type="password"`:
- * this panel already prints the password in plaintext for every visitor to
- * read (spec Assumptions), so masking it only while typing would add
- * friction without adding any actual privacy.
+ * The password field is masked like the printed password, and reveals itself
+ * only while focused — tapping into it to type shows what is being entered,
+ * and it masks again as soon as focus leaves.
  */
 function EditForm({ initial, strings: s, onSave, onCancel }: EditFormProps) {
   const [draft, setDraft] = useState(initial);
   const [showErrors, setShowErrors] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const errors = validateConfigInput(draft);
 
   const handleSubmit = useCallback(
@@ -156,11 +193,14 @@ function EditForm({ initial, strings: s, onSave, onCancel }: EditFormProps) {
             <input
               id="gw-password"
               className={styles.fieldInput}
-              type="text"
+              type={isPasswordFocused ? 'text' : 'password'}
               inputMode="text"
+              autoComplete="off"
               maxLength={63}
               value={draft.password}
               onChange={(e) => setDraft((d) => ({ ...d, password: e.target.value }))}
+              onFocus={() => setIsPasswordFocused(true)}
+              onBlur={() => setIsPasswordFocused(false)}
               aria-invalid={showErrors && Boolean(errors.password)}
               aria-describedby={showErrors && errors.password ? 'gw-password-error' : undefined}
               aria-label={s.passwordLabel}
@@ -260,7 +300,9 @@ export function GuestWifiPanel({ config, locale, onSave }: GuestWifiPanelProps) 
               {config.securityType === 'nopass' ? null : (
                 <div className={styles.credentialRow}>
                   <dt className={styles.credentialLabel}>{s.passwordLabel}</dt>
-                  <dd className={styles.credentialValue}>{config.password}</dd>
+                  <dd className={styles.credentialValue}>
+                    <MaskedPassword password={config.password} strings={s} />
+                  </dd>
                 </div>
               )}
             </dl>
