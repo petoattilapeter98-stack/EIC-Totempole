@@ -241,8 +241,14 @@ describe('Restaurant map layout at 1920x1280', () => {
     // Explicit +/-1px tolerance (not toBeCloseTo's precision-based rounding):
     // the pinned top/right are 1px off the pre-migration measurement because
     // the control used to sit inside .mapArea's 1px border, and EnlargedView's
-    // shared return control has no such border to inherit. Width and height
-    // are unaffected by that and stay tight.
+    // shared return control has no such border to inherit. Height is
+    // min-height-driven and stays tight.
+    //
+    // Width is the one text-driven dimension (nowrap label + padding), so it
+    // varies with the platform's glyph rasterisation: 229.52px measured on
+    // Windows Chromium, 227px on the ubuntu-latest CI runner, same font files.
+    // Its tolerance absorbs that; the platform-independent map-vs-game
+    // placement check (top/right/height) lives in TicTacToe.browser.test.tsx.
     const closeTo = (actual: number, expected: number, tolerance: number) =>
       expect(Math.abs(actual - expected), `${actual} within ${tolerance}px of ${expected}`).toBeLessThanOrEqual(
         tolerance,
@@ -250,7 +256,7 @@ describe('Restaurant map layout at 1920x1280', () => {
 
     closeTo(box.top, 41, 1);
     closeTo(box.right, 1879, 1);
-    closeTo(box.width, 229.515625, 1);
+    closeTo(box.width, 229.515625, 4);
     closeTo(box.height, 64, 1);
   });
 

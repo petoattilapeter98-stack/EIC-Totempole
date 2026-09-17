@@ -1,8 +1,6 @@
 import type { TabModule } from '../types/tab';
 
 import BoardAgenda, { meta as boardAgendaMeta } from './board-agenda';
-import LocalTransit, { meta as localTransitMeta } from './local-transit';
-import CompanyHighlights, { meta as companyHighlightsMeta } from './company-highlights';
 import GuestWifi, { meta as guestWifiMeta } from './guest-wifi';
 import VoiceAssistant, { meta as voiceAssistantMeta } from './voice-assistant';
 import RestaurantMap, { meta as restaurantMapMeta } from './restaurant-map';
@@ -24,8 +22,6 @@ import TicTacToe, { meta as ticTacToeMeta } from './tic-tac-toe';
  */
 export const TABS = [
   { meta: boardAgendaMeta, Component: BoardAgenda },
-  { meta: localTransitMeta, Component: LocalTransit },
-  { meta: companyHighlightsMeta, Component: CompanyHighlights },
   { meta: guestWifiMeta, Component: GuestWifi },
   { meta: voiceAssistantMeta, Component: VoiceAssistant },
   { meta: restaurantMapMeta, Component: RestaurantMap },

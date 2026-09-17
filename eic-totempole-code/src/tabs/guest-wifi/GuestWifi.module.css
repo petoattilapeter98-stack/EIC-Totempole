@@ -5,8 +5,8 @@
  * Uses the SAME white card surface every other tab renders into
  * (App.module.css `.content`: --color-surface, with its own border/radius/
  * shadow/padding already applied there) — no local background override, so
- * this panel reads as consistent with Board Agenda, Local Transit, Company
- * Highlights and Restaurants rather than standing apart from them.
+ * this panel reads as consistent with Board Agenda and Restaurants rather
+ * than standing apart from them.
  *
  * The "glowing/immersive" identity comes from an ambient colour wash that
  * drifts across the WHOLE panel (below) — not a halo confined to the QR
