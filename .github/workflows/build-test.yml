@@ -1,0 +1,63 @@
+name: Build & test
+
+# THE single definition of "is this code good". Called by:
+#   - ci.yml       on every pull request, as the gate that blocks merging
+#   - deploy.yml   on push to main, before anything reaches S3
+#
+# It lives in its own reusable workflow so those two paths cannot drift. A PR
+# that is green must mean the same thing as a deploy that is green - if the gate
+# and the deploy ran different commands, a PR could pass and then break main,
+# which is exactly the failure this file exists to prevent.
+on:
+  workflow_call:
+    inputs:
+      upload-dist:
+        description: >-
+          Publish the built dist/ as an artifact. deploy.yml needs it to hand to
+          the S3 job; PR runs keep it too, so a reviewer can download the exact
+          bundle a change produces.
+        type: boolean
+        default: true
+        required: false
+
+defaults:
+  run:
+    working-directory: eic-totempole-code
+
+jobs:
+  build:
+    name: Build & test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: eic-totempole-code/package-lock.json
+
+      - run: npm ci
+
+      # Only the browser-mode layout project needs a real browser, but it is
+      # the project that matters most here: the no-scroll and touch-target
+      # guarantees (Constitution II and III) are unverifiable without a layout
+      # engine, and jsdom would pass them vacuously.
+      - name: Install Chromium for the layout project
+        run: npx playwright install --with-deps chromium
+
+      # Run separately rather than leaning on `npm run build` (which also
+      # typechecks), so a red run names which thing broke.
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.upload-dist }}
+        with:
+          name: kiosk-dist
+          path: eic-totempole-code/dist
+          retention-days: 7

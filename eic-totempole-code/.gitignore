@@ -11,7 +11,7 @@ coverage/
 .vitest/
 test-results/
 playwright-report/
-# Vitest browser mode's automatic failure screenshots
+# Vitest browser-mode failure screenshots, written next to the failing test
 __screenshots__/
 
 # Logs

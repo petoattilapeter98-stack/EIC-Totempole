@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { App } from '../../app/App';
 import { KioskProvider } from '../../context/KioskContext';
+import { TABS } from '../registry';
 import { RESTAURANTS } from './restaurants.static';
 import { STRINGS } from './strings';
 
@@ -40,15 +41,43 @@ async function openMapTab(user: ReturnType<typeof userEvent.setup>) {
   );
   await user.click(screen.getByRole('tab', { name: new RegExp(STRINGS.listHeading.en) }));
 
-  // ContentRegion plays a 0.34s entry animation on every tab change, and that
-  // animation applies a `transform` — which makes the content region a
-  // containing block for `position: fixed` descendants while it runs. Measuring
-  // the expanded panel mid-animation reports the content region's box, not the
-  // viewport, so settle first and describe the steady state.
-  //
-  // A fixed wait rather than awaiting document.getAnimations(): AmbientAurora
-  // runs INFINITE animations, so awaiting them all never resolves.
-  await new Promise((resolve) => setTimeout(resolve, 450));
+  await settleEntry();
+}
+
+/**
+ * Wait for ContentRegion's entry animation to finish.
+ *
+ * WHY THIS MATTERS: `.enter` applies a `transform` for 0.34s on every tab
+ * change, and a transformed ancestor becomes the containing block for
+ * `position: fixed` descendants. Measure the expanded panel while it runs and
+ * you get the content region's box (~1838px) instead of the viewport's 1920 —
+ * the transient RestaurantMap.module.css documents.
+ *
+ * This waits on the ANIMATION, not on a duration. The previous fixed 450ms left
+ * only ~110ms of headroom over the 340ms animation, which is fine on an idle
+ * machine and not fine on a busy one: under load the click-to-animation-start
+ * delay alone eats the margin, and the suite fails roughly one run in three with
+ * `expected 1838 to be 1920`.
+ *
+ * `panel.getAnimations()` rather than `document.getAnimations()` deliberately:
+ * the document-wide call is what forced the fixed wait in the first place,
+ * because AmbientAurora runs INFINITE animations that never settle. Scoped to
+ * the panel element, the only animation is the one we care about.
+ */
+async function settleEntry() {
+  // A frame first: the animation must exist before we can await it.
+  await nextFrame();
+
+  const panel = screen.getByRole('tabpanel');
+  await Promise.all(panel.getAnimations().map((a) => a.finished.catch(() => undefined)));
+
+  // And one after: the transform is gone, but the fixed element only snaps back
+  // to the viewport on the next layout pass.
+  await nextFrame();
+}
+
+function nextFrame() {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve(undefined)));
 }
 
 describe('Restaurant map layout at 1920x1280', () => {
@@ -225,23 +254,20 @@ describe('Restaurant map layout at 1920x1280', () => {
     closeTo(box.height, 64, 1);
   });
 
-  it('renders six nav tabs without overflow (research R7, 004 R7)', async () => {
+  it('renders one nav tab per registry entry without overflow (research R7, 004 R7)', async () => {
     const user = userEvent.setup();
     await openMapTab(user);
 
     const tabs = screen.getAllByRole('tab');
-    // Updated from 5 to 6 when 004-tic-tac-toe added a sixth tab; re-measured
-    // to confirm the auto-columns nav (research R7) still fits every label
-    // without wrapping or overflow at 1920x1280.
-    expect(tabs).toHaveLength(6);
+    expect(tabs).toHaveLength(TABS.length);
 
     for (const tab of tabs) {
       const box = tab.getBoundingClientRect();
       // The hardcoded repeat(4, 1fr) this replaced would have squeezed or
-      // wrapped the fifth tab, and would break again with a sixth.
+      // wrapped tabs once the registry grew past four entries.
       expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
       expect(box.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
     }
-    expectNoOverflow('six-tab nav');
+    expectNoOverflow(`${TABS.length}-tab nav`);
   });
 });

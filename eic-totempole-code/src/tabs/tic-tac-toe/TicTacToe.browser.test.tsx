@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { App } from '../../app/App';
 import { KioskProvider } from '../../context/KioskContext';
+import { TABS } from '../registry';
 import { STRINGS as MAP_STRINGS } from '../restaurant-map/strings';
 import { STRINGS } from './strings';
 
@@ -232,31 +233,31 @@ describe('Tic-Tac-Toe layout — computed colours (view-states.md §5)', () => {
   });
 });
 
-describe('Tic-Tac-Toe layout — six-tab nav (research R7)', () => {
+describe('Tic-Tac-Toe layout — full nav (research R7)', () => {
   it('shows every nav label without truncation in English and Hungarian', async () => {
     const user = userEvent.setup();
     await openTicTacToeTab(user, false);
 
     let tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(6);
+    expect(tabs).toHaveLength(TABS.length);
     for (const tab of tabs) {
       const label = tab.querySelector('[class*="label"]');
       if (label) {
         expect((label as HTMLElement).scrollWidth).toBeLessThanOrEqual((label as HTMLElement).clientWidth + 1);
       }
     }
-    expectNoOverflow('six tabs, en');
+    expectNoOverflow(`${TABS.length} tabs, en`);
 
     await user.click(screen.getByRole('button', { name: 'Switch language to Hungarian' }));
     tabs = screen.getAllByRole('tab');
-    expect(tabs).toHaveLength(6);
+    expect(tabs).toHaveLength(TABS.length);
     for (const tab of tabs) {
       const label = tab.querySelector('[class*="label"]');
       if (label) {
         expect((label as HTMLElement).scrollWidth).toBeLessThanOrEqual((label as HTMLElement).clientWidth + 1);
       }
     }
-    expectNoOverflow('six tabs, hu');
+    expectNoOverflow(`${TABS.length} tabs, hu`);
   });
 });
 
