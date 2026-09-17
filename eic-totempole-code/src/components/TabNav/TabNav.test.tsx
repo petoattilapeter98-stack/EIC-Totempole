@@ -41,14 +41,14 @@ describe('TabNav', () => {
     }
   });
 
-  it('updates the content region inline with that tab\'s own placeholder (FR-013, FR-014)', async () => {
+  it('updates the content region inline with that tab\'s own content (FR-013, FR-014)', async () => {
     const user = userEvent.setup();
     renderNav();
 
-    await user.click(screen.getByRole('tab', { name: /Local Transit/ }));
+    await user.click(screen.getByRole('tab', { name: /Guest Wi-Fi/ }));
 
     expect(
-      screen.getByRole('heading', { name: 'Local Transit' }),
+      screen.getByRole('heading', { name: 'Guest Wi-Fi' }),
     ).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Board Agenda' })).not.toBeInTheDocument();
   });
@@ -62,7 +62,7 @@ describe('TabNav', () => {
     const lastTabLabel = TABS[TABS.length - 1]!.meta.label.en;
 
     await user.keyboard('{ArrowRight}');
-    expect(selected()[0]).toHaveAccessibleName(/Local Transit/);
+    expect(selected()[0]).toHaveAccessibleName(/Guest Wi-Fi/);
 
     await user.keyboard('{End}');
     expect(selected()[0]).toHaveAccessibleName(new RegExp(lastTabLabel));

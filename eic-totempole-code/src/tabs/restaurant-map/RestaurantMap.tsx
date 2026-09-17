@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Maximize2, Minimize2 } from 'lucide-react';
+import { Maximize2 } from 'lucide-react';
 
 import { useKiosk } from '../../context/KioskContext';
 import { accentVars } from '../../components/TabPlaceholder/accent';
+import { EnlargedView } from '../../components/EnlargedView/EnlargedView';
 import { MapEmbed } from './MapEmbed';
 import { RestaurantList } from './RestaurantList';
 import { meta } from './meta';
@@ -32,9 +33,14 @@ type MapStatus = 'loading' | 'ready' | 'failed';
  * it, taking the visitor's pan/zoom position along. Adding an explicit reset
  * path would be redundant machinery (research R6).
  *
- * The expanded state is `position: fixed`, NOT a portal or a <dialog>: it stays
- * in this module's React subtree and announces no dialog semantics, so it
- * remains an inline state change (Constitution IV).
+ * The expanded state is rendered via the shared `EnlargedView`
+ * (specs/004-tic-tac-toe/contracts/enlarged-view.md), which both this tab and
+ * the Tic-Tac-Toe game depend on. `EnlargedView` is mounted in BOTH display
+ * states (its `active` prop toggles what it renders) so that `mapArea`'s
+ * children — the iframe above all — are never re-parented and therefore never
+ * remount when expanding or collapsing (contract E10). Remounting the iframe
+ * on every expand/collapse would lose the visitor's pan/zoom position and
+ * restart the 5s load race.
  */
 export default function RestaurantMap() {
   const { locale, signalActivity } = useKiosk();
@@ -50,10 +56,10 @@ export default function RestaurantMap() {
 
   const frameRef = useRef<HTMLIFrameElement | null>(null);
   const expandRef = useRef<HTMLButtonElement | null>(null);
-  const collapseRef = useRef<HTMLButtonElement | null>(null);
-  // Tracks which control to restore focus to, without making focus a render
-  // input.
-  const pendingFocus = useRef<'expand' | 'collapse' | null>(null);
+  // Tracks whether the expand control should regain focus on collapse, without
+  // making focus a render input. EnlargedView (contract E7) restores focus to
+  // its own return control on expand, so only the 'expand' direction is ours.
+  const pendingFocus = useRef<'expand' | null>(null);
 
   // Bridges touches inside the cross-origin frame to the idle timer, bounded by
   // the FR-036 ceiling. Without it, panning the map for 60s resets the kiosk.
@@ -82,10 +88,11 @@ export default function RestaurantMap() {
 
   // Focus follows the state change so a keyboard or screen-reader user is not
   // stranded behind the now-covered nav. Deliberately NOT a focus trap — a trap
-  // would make this a modal in all but name (contract rules S6, S7).
+  // would make this a modal in all but name (contract rules S6, S7). Only the
+  // collapse -> expand direction is handled here; expand -> collapse focus is
+  // EnlargedView's own responsibility (contract E7).
   useEffect(() => {
-    if (pendingFocus.current === 'collapse') collapseRef.current?.focus();
-    else if (pendingFocus.current === 'expand') expandRef.current?.focus();
+    if (pendingFocus.current === 'expand') expandRef.current?.focus();
     pendingFocus.current = null;
   }, [display]);
 
@@ -94,7 +101,6 @@ export default function RestaurantMap() {
   }, []);
 
   const expand = useCallback(() => {
-    pendingFocus.current = 'collapse';
     setDisplay('expanded');
   }, []);
 
@@ -106,47 +112,61 @@ export default function RestaurantMap() {
   const isExpanded = display === 'expanded';
 
   const mapArea = (
-    <div className={styles.mapArea}>
-      {mapStatus === 'failed' ? (
-        <div className={styles.fallback} role="status">
-          <h3 className={styles.fallbackHeading}>{s.fallbackHeading}</h3>
-          <p className={styles.fallbackBody}>{s.fallbackBody}</p>
-          {/*
-            Only the EXPANDED state repeats the list here. In the default state
-            the companion list is already on screen beside the map and simply
-            gains addresses (below), so rendering it twice would duplicate every
-            restaurant name — the same set, listed twice, one of them redundant.
-          */}
-          {isExpanded ? <RestaurantList locale={locale} showAddresses /> : null}
-        </div>
-      ) : (
-        <>
-          <MapEmbed ref={frameRef} title={s.mapFrameTitle} onLoad={handleLoad} />
-          {mapStatus === 'loading' ? (
-            <p className={styles.loading} role="status">
-              {s.loading}
-            </p>
-          ) : null}
-        </>
-      )}
-
-      <button
-        type="button"
-        ref={isExpanded ? collapseRef : expandRef}
-        className={styles.stateToggle}
-        onClick={isExpanded ? collapse : expand}
-        aria-label={isExpanded ? s.collapseLabel : s.expandLabel}
-      >
-        {isExpanded ? (
-          <Minimize2 className={styles.toggleIcon} aria-hidden="true" />
+    <EnlargedView
+      active={isExpanded}
+      returnLabel={s.collapseLabel}
+      onReturn={collapse}
+      // No attractExempt: the map dims with the rest of the chrome in both
+      // display states (003 FR-035). Only the Tic-Tac-Toe game view opts out.
+    >
+      {/*
+        .mapArea is EnlargedView's CHILD, not something merged onto its panel:
+        the panel owns full-viewport positioning and padding (contract E1); this
+        box owns the map's own border/background framing, and is rendered
+        identically whether EnlargedView is active (display:contents passes it
+        straight through to .root's grid) or not.
+      */}
+      <div className={styles.mapArea}>
+        {mapStatus === 'failed' ? (
+          <div className={styles.fallback} role="status">
+            <h3 className={styles.fallbackHeading}>{s.fallbackHeading}</h3>
+            <p className={styles.fallbackBody}>{s.fallbackBody}</p>
+            {/*
+              Only the EXPANDED state repeats the list here. In the default state
+              the companion list is already on screen beside the map and simply
+              gains addresses (below), so rendering it twice would duplicate every
+              restaurant name — the same set, listed twice, one of them redundant.
+            */}
+            {isExpanded ? <RestaurantList locale={locale} showAddresses /> : null}
+          </div>
         ) : (
-          <Maximize2 className={styles.toggleIcon} aria-hidden="true" />
+          <>
+            <MapEmbed ref={frameRef} title={s.mapFrameTitle} onLoad={handleLoad} />
+            {mapStatus === 'loading' ? (
+              <p className={styles.loading} role="status">
+                {s.loading}
+              </p>
+            ) : null}
+          </>
         )}
-        <span className={styles.toggleLabel}>
-          {isExpanded ? s.collapseLabel : s.expandLabel}
-        </span>
-      </button>
-    </div>
+
+        {/* The expand control is EnlargedView's counterpart: it only exists in
+            the default state, matching EnlargedView's return control only
+            existing while active. */}
+        {!isExpanded ? (
+          <button
+            type="button"
+            ref={expandRef}
+            className={styles.stateToggle}
+            onClick={expand}
+            aria-label={s.expandLabel}
+          >
+            <Maximize2 className={styles.toggleIcon} aria-hidden="true" />
+            <span className={styles.toggleLabel}>{s.expandLabel}</span>
+          </button>
+        ) : null}
+      </div>
+    </EnlargedView>
   );
 
   return (

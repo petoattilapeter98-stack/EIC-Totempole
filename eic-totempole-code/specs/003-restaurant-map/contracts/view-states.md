@@ -9,6 +9,18 @@ visitor mid-pan. The second is the one that will break if someone "simplifies" i
 
 ## 1. Display states
 
+**Update (004-tic-tac-toe)**: the expanded state's panel, return control, focus-on-open behaviour
+and shell-level footer/attract handling are now implemented by the shared `EnlargedView` component,
+introduced when the Tic-Tac-Toe feature needed the same full-viewport capability. Rules **S2, S3,
+S5 (return control only), S6 (expand→collapse direction only) and S7** are now owned by
+[../../004-tic-tac-toe/contracts/enlarged-view.md](../../004-tic-tac-toe/contracts/enlarged-view.md)
+and enforced there; this table keeps them listed for continuity but they should be read as
+delegated, not reimplemented, in `RestaurantMap.tsx`. That migration also fixed a defect this
+contract did not know about: the expanded panel did not actually cover the footer row (the
+countdown painted on top of it), because `<main>`'s own stacking context confined the panel's
+z-index below the footer's. See `enlarged-view.md` research R2. The table below still describes the
+feature's observable behaviour; only the *ownership* of S2/S3/S5/S6/S7 changed.
+
 | State | Layout | Controls present |
 |-------|--------|------------------|
 | `default` | Map box + companion list inside the content region; header, hero, nav, footer all visible | Expand control |
@@ -19,12 +31,12 @@ visitor mid-pan. The second is the one that will break if someone "simplifies" i
 | ID | Rule | Requirement |
 |----|------|-------------|
 | S1 | `default` is the state on every mount. Expansion never persists across entries. | FR-011, FR-024 |
-| S2 | The expanded element stays in the module's React subtree — **no portal, no `<dialog>`, no `role="dialog"`** | Principle IV |
-| S3 | The return control is always visible while expanded — never auto-hiding, fading, or gesture-only | FR-025, FR-026 |
+| S2 | The expanded element stays in the module's React subtree — **no portal, no `<dialog>`, no `role="dialog"`** (now `EnlargedView` E1) | Principle IV |
+| S3 | The return control is always visible while expanded — never auto-hiding, fading, or gesture-only (now `EnlargedView` E4) | FR-025, FR-026 |
 | S4 | Both controls meet ≥64px target / ≥16px separation using `--touch-target-min` and `--touch-gap-min` | Principle III |
-| S5 | Both controls carry localized accessible names | FR-018, FR-019 |
-| S6 | On expand, focus moves to the return control; on collapse, focus returns to the expand control | Principle VII |
-| S7 | **No focus trap.** A trap would make it a modal in all but name. | Principle IV |
+| S5 | Both controls carry localized accessible names (return control now `EnlargedView` E4) | FR-018, FR-019 |
+| S6 | On expand, focus moves to the return control (now `EnlargedView` E7); on collapse, focus returns to the expand control (still `RestaurantMap.tsx`'s own `pendingFocus`) | Principle VII |
+| S7 | **No focus trap.** A trap would make it a modal in all but name. (now `EnlargedView` E8) | Principle IV |
 | S8 | Neither state may scroll the page, at 8 restaurants, longest names, both locales | Principle II, FR-009 |
 
 **Why no portal (S2)**: portalling to `document.body` would take the element out of the feature's DOM
