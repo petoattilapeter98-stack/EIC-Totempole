@@ -1,0 +1,93 @@
+/*
+ * Shared full-viewport panel.
+ * specs/004-tic-tac-toe/contracts/enlarged-view.md
+ *
+ * `position: fixed` — NOT a portal, NOT a <dialog>. The panel stays in the
+ * caller's own React subtree and announces no dialog semantics, so it remains
+ * an inline state change rather than a modal (Constitution IV, contract E1).
+ *
+ * The shell's `.shell { overflow: hidden }` means this can never introduce
+ * scrolling.
+ *
+ * KNOWN TRANSIENT: ContentRegion's `.enter` animation applies a `transform` for
+ * 0.34s on every tab change, and a transformed ancestor becomes the containing
+ * block for `position: fixed` descendants. Expanding within that window renders
+ * this panel inset to the content region before snapping to the viewport when
+ * the animation ends. It is bounded to 340ms after arriving on the tab and
+ * self-corrects. The only complete fix is a portal, which contract rule E1
+ * forbids — it would leave the caller's subtree and read as a modal. Measured
+ * in each caller's browser test after the animation settles, which is the
+ * steady state a visitor actually interacts with.
+ */
+.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+
+  padding: var(--space-6);
+  background: var(--color-surface);
+}
+
+/*
+ * Inactive: no box in the caller's layout at all. `display: contents` makes
+ * this wrapper transparent to layout while keeping the SAME child DOM nodes
+ * mounted across the active/inactive toggle (contract E10) — children are
+ * never re-parented, so a feature like the map's iframe never reloads.
+ */
+.inactive {
+  display: contents;
+}
+
+/* ---------------------------------------------------------------------------
+ * Return control
+ *
+ * Constitution III: the button's OWN box is the 64px target, formed by
+ * min-height/min-width plus padding — never a transparent overlay. It is
+ * persistently visible and never fades or auto-hides: while active, this is
+ * the visitor's only way back (contract E4, E5).
+ * ------------------------------------------------------------------------- */
+.returnControl {
+  position: absolute;
+  /*
+   * NOT `top: var(--touch-gap-min)` alone. An absolutely positioned element's
+   * containing block is its ancestor's PADDING BOX — .panel's own `padding`
+   * does NOT inset an absolutely positioned child the way it insets a normal-
+   * flow child (that's the well-known CSS quirk here). The control must land
+   * inside the padded content area visually, so its offset bakes the panel's
+   * padding in explicitly rather than relying on inheriting it.
+   */
+  top: calc(var(--space-6) + var(--touch-gap-min));
+  right: calc(var(--space-6) + var(--touch-gap-min));
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  padding: var(--space-4) var(--space-5);
+
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-soft);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+
+  font-family: var(--font-display);
+  font-size: var(--text-base);
+  font-weight: 700;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.returnIcon {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  /* Inherited from the caller via --accent-color (contract E6): emerald for
+     the map, blue for the game. Every other visual property is identical. */
+  color: var(--accent-color);
+}
+
+.returnLabel {
+  white-space: nowrap;
+}

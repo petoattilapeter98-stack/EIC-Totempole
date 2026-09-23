@@ -149,18 +149,118 @@ describe('Restaurant map layout at 1920x1280', () => {
   });
 
   it('covers the whole viewport when expanded (FR-024)', async () => {
+    // The full-viewport geometry guarantee now lives on the shared
+    // EnlargedView panel (`[data-enlarged-view]`), not on this tab's own
+    // `[data-display="expanded"]` wrapper: that wrapper stays in .root's
+    // normal grid flow (see specs/004-tic-tac-toe/contracts/enlarged-view.md
+    // E1) and the panel — which IS position:fixed;inset:0 — is nested inside
+    // it. `[data-display="expanded"]` remains this tab's own state marker,
+    // used by other tests here and by the footer/geometry tests below.
     const user = userEvent.setup();
     await openMapTab(user);
     await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
 
-    const root = document.querySelector('[data-display="expanded"]');
+    const root = document.querySelector('[data-enlarged-view]');
     const box = root?.getBoundingClientRect();
 
     expect(box?.width).toBe(window.innerWidth);
     expect(box?.height).toBe(window.innerHeight);
   });
 
-  it('renders one nav tab per registry entry without overflow (research R7)', async () => {
+  it('covers the footer while expanded (004 R2)', async () => {
+    // The expanded panel's z-index only competes inside <main>'s own stacking
+    // context, so before the 004-tic-tac-toe shell fix the footer (same z-index,
+    // later in the DOM) painted on top of the "full-viewport" map. This proves
+    // it on the current code and must keep passing after EnlargedView lands.
+    const user = userEvent.setup();
+    await openMapTab(user);
+    await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
+    await new Promise((resolve) => setTimeout(resolve, 200));
+
+    const root = document.querySelector('[data-display="expanded"]');
+    expect(root).not.toBeNull();
+
+    const footer = document.querySelector('footer');
+    expect(footer).not.toBeNull();
+    const footerBox = footer!.getBoundingClientRect();
+    const footerHit = document.elementFromPoint(
+      footerBox.left + footerBox.width / 2,
+      footerBox.top + footerBox.height / 2,
+    );
+    expect(root!.contains(footerHit)).toBe(true);
+
+    const tablist = screen.getByRole('tablist');
+    const navBox = tablist.getBoundingClientRect();
+    const navHit = document.elementFromPoint(navBox.left + navBox.width / 2, navBox.top + navBox.height / 2);
+    expect(root!.contains(navHit)).toBe(true);
+
+    const header = document.querySelector('header');
+    expect(header).not.toBeNull();
+    const headerBox = header!.getBoundingClientRect();
+    const headerHit = document.elementFromPoint(
+      headerBox.left + headerBox.width / 2,
+      headerBox.top + headerBox.height / 2,
+    );
+    expect(root!.contains(headerHit)).toBe(true);
+  });
+
+  it('still dims while expanded in attract mode (004 R1)', async () => {
+    // The map does NOT opt out of attract dimming (003 FR-035) — only the
+    // EnlargedView caller that passes attractExempt does. This guards against
+    // the exemption leaking to a caller that never asked for it.
+    const user = userEvent.setup();
+    render(
+      <KioskProvider attractAfterSeconds={1}>
+        <App />
+      </KioskProvider>,
+    );
+    await user.click(screen.getByRole('tab', { name: new RegExp(STRINGS.listHeading.en) }));
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
+    await new Promise((resolve) => setTimeout(resolve, 3200));
+
+    const main = document.querySelector('main');
+    expect(main).not.toBeNull();
+    expect(getComputedStyle(main!).opacity).toBe('0.16');
+  });
+
+  it('keeps the collapse control geometry (004 E5)', async () => {
+    // Pins the pre-migration rect of the expanded map's return control, measured
+    // on the unmodified code before src/components/EnlargedView/ existed. The
+    // 004-tic-tac-toe EnlargedView migration (specs/004-tic-tac-toe/contracts/
+    // enlarged-view.md E5) must reproduce this rect so the game's return control
+    // — which shares the same component — matches what shipped in 003.
+    const user = userEvent.setup();
+    await openMapTab(user);
+    await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
+
+    const box = screen
+      .getByRole('button', { name: STRINGS.collapseLabel.en })
+      .getBoundingClientRect();
+
+    // Explicit +/-1px tolerance (not toBeCloseTo's precision-based rounding):
+    // the pinned top/right are 1px off the pre-migration measurement because
+    // the control used to sit inside .mapArea's 1px border, and EnlargedView's
+    // shared return control has no such border to inherit. Height is
+    // min-height-driven and stays tight.
+    //
+    // Width is the one text-driven dimension (nowrap label + padding), so it
+    // varies with the platform's glyph rasterisation: 229.52px measured on
+    // Windows Chromium, 227px on the ubuntu-latest CI runner, same font files.
+    // Its tolerance absorbs that; the platform-independent map-vs-game
+    // placement check (top/right/height) lives in TicTacToe.browser.test.tsx.
+    const closeTo = (actual: number, expected: number, tolerance: number) =>
+      expect(Math.abs(actual - expected), `${actual} within ${tolerance}px of ${expected}`).toBeLessThanOrEqual(
+        tolerance,
+      );
+
+    closeTo(box.top, 41, 1);
+    closeTo(box.right, 1879, 1);
+    closeTo(box.width, 229.515625, 4);
+    closeTo(box.height, 64, 1);
+  });
+
+  it('renders one nav tab per registry entry without overflow (research R7, 004 R7)', async () => {
     const user = userEvent.setup();
     await openMapTab(user);
 

@@ -130,3 +130,32 @@
   box-shadow: var(--shadow-surface);
   padding: var(--space-8);
 }
+
+/*
+ * Shared EnlargedView support (specs/004-tic-tac-toe/contracts/enlarged-view.md §3).
+ *
+ * `.content` (this row's <main>) is itself a stacking context (position:
+ * relative from .recede below, z-index: 1), so an enlarged view's own
+ * z-index only wins INSIDE it — it cannot beat the footer row, which follows
+ * `.content` in the DOM at the same z-index 1 and therefore paints on top
+ * (research R2). This rule raises `.content` above the other shell rows
+ * whenever it contains an active EnlargedView, keyed only on that generic
+ * data attribute — this file names no feature.
+ */
+.shell:has([data-enlarged-view]) .content {
+  z-index: 2;
+}
+
+/*
+ * Attract dims `.content` (this row's <main>, via .recede) directly, and no
+ * descendant can undo an ancestor's opacity — so a feature that must stay at
+ * full presence while attract is otherwise active (specs/004-tic-tac-toe
+ * FR-020: the Tic-Tac-Toe game view, so a tap on the board is never merely
+ * "waking" a dimmed screen) needs a rule here, not inside its own module
+ * (research R1). Opt-in only, via the same generic attribute pair E10 relies
+ * on — this file still names no feature. No `!important`: this selector's
+ * specificity (0,4,0) already beats `.attract .recede` (0,2,0).
+ */
+.shell:has([data-enlarged-view][data-attract-exempt]) .content {
+  opacity: 1;
+}

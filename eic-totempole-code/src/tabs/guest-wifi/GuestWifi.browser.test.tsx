@@ -52,10 +52,14 @@ function renderInViewportContainer(config: GuestNetworkConfig, locale: 'en' | 'h
 
 describe('Guest Wi-Fi panel layout at 1920x1280', () => {
   it.each(['en', 'hu'] as const)(
-    'never scrolls with the worst-case 32/63-character credentials (%s)',
-    (locale) => {
+    'never scrolls with the worst-case 32/63-character credentials, password revealed (%s)',
+    async (locale) => {
+      const user = userEvent.setup();
       renderInViewportContainer(WORST_CASE, locale);
       expectNoOverflow(`configured panel, ${locale}`);
+
+      await user.click(screen.getByRole('button', { name: STRINGS.showPasswordLabel[locale] }));
+      expectNoOverflow(`configured panel, password revealed, ${locale}`);
     },
   );
 
@@ -75,6 +79,25 @@ describe('Guest Wi-Fi panel layout at 1920x1280', () => {
   it('gives the Edit button a 64px touch target', () => {
     renderInViewportContainer(WORST_CASE, 'en');
     const box = screen.getByRole('button', { name: STRINGS.editButtonLabel.en }).getBoundingClientRect();
+    expect(box.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
+    expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
+  });
+
+  it('keeps the credential rows the same width when the password is revealed', async () => {
+    const user = userEvent.setup();
+    // Short values, so a content-sized column would visibly change width.
+    renderInViewportContainer({ ssid: 'Guest', password: 'WelcomeGuest2026', securityType: 'WPA' }, 'en');
+
+    const toggle = screen.getByRole('button', { name: STRINGS.showPasswordLabel.en });
+    const hiddenWidth = toggle.getBoundingClientRect().width;
+    await user.click(toggle);
+
+    expect(toggle.getBoundingClientRect().width).toBe(hiddenWidth);
+  });
+
+  it('gives the password reveal toggle a 64px touch target', () => {
+    renderInViewportContainer(WORST_CASE, 'en');
+    const box = screen.getByRole('button', { name: STRINGS.showPasswordLabel.en }).getBoundingClientRect();
     expect(box.width).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
     expect(box.height).toBeGreaterThanOrEqual(MIN_TOUCH_TARGET);
   });

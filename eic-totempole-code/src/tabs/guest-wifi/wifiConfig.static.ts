@@ -21,7 +21,7 @@
 export interface GuestNetworkConfig {
   /** Network name. 1–32 bytes when configured; '' means "not configured" (research R7). */
   readonly ssid: string;
-  /** Never translated, never masked (spec Assumptions). '' only valid with 'nopass'. */
+  /** Never translated. Masked on screen until tapped. '' only valid with 'nopass'. */
   readonly password: string;
   /** 'WPA' covers WPA/WPA2/WPA3-Personal for QR-payload purposes (research R2). */
   readonly securityType: 'WPA' | 'nopass';
@@ -37,7 +37,7 @@ export interface GuestNetworkConfig {
  * 003-restaurant-map's placeholder `MAP_ID` used.
  */
 export const WIFI_CONFIG: GuestNetworkConfig = Object.freeze({
-  ssid: 'TEKsystems Guest',
+  ssid: 'AG_Global_Guest',
   password: 'WelcomeGuest2026',
   securityType: 'WPA',
 });

@@ -18,8 +18,6 @@ welcome header, a live clock, and a single-row tab navigation — no scrolling,
 no menus, no keyboard. Tabs today:
 
 - **Board Agenda** — the day's schedule, current session marked live
-- **Local Transit** — getting to/from the building
-- **Company Highlights** — company info
 - **Guest Wi-Fi** — network access details
 - **Voice Assistant** — a hands-free voice Q&A agent (tap Start, just talk, tap
   End) answering questions about the Innovation Centre, the company, and a
