@@ -49,25 +49,51 @@
   text-align: center;
 }
 
-.listeningIndicator {
+.talkButton,
+.talkButtonActive {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  color: var(--color-text-muted);
+
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-6);
+
+  border-radius: var(--radius-pill);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
+
+  /* The pressed state is driven by pointer down/up (below), not native
+     :active timing, so it stays visually "held" for as long as the visitor
+     keeps their finger down -- and that hold must not also trigger text
+     selection or a touch long-press/scroll gesture. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+
+  transition: background var(--transition-touch), color var(--transition-touch),
+    border-color var(--transition-touch);
 }
 
-.micIcon,
-.micIconActive {
+.talkButton {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--accent-border);
+}
+
+.talkButtonActive {
+  background: var(--accent-color);
+  color: var(--color-surface);
+  border: 1px solid var(--accent-color);
+}
+
+.micIcon {
   width: var(--space-6);
   height: var(--space-6);
-}
-
-.micIconActive {
-  color: var(--accent-color);
+  color: inherit;
 }
 
 .transcript {
@@ -113,10 +139,104 @@
   color: var(--color-text);
 }
 
+/* Markdown block elements nested inside an assistant bubble (markdown.tsx). */
+.assistantLine p {
+  margin: 0 0 var(--space-3) 0;
+}
+
+.assistantLine ul,
+.assistantLine ol {
+  margin: 0 0 var(--space-3) 0;
+  padding-left: var(--space-5);
+}
+
+.assistantLine li {
+  margin-bottom: var(--space-2);
+}
+
+.assistantLine p:last-child,
+.assistantLine ul:last-child,
+.assistantLine ol:last-child,
+.assistantLine li:last-child {
+  margin-bottom: 0;
+}
+
+.assistantLine strong {
+  font-weight: 700;
+}
+
+.assistantLine code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.05em 0.35em;
+  border-radius: var(--radius-md);
+  font-size: 0.9em;
+}
+
+.assistantLine a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.assistantLine sup {
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+
 .interimLine {
   align-self: flex-end;
   background: transparent;
   border: 1px dashed var(--accent-border);
   color: var(--color-text-muted);
   font-style: italic;
+}
+
+.thinking {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.typingDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+}
+
+.typingDots span {
+  width: 0.4em;
+  height: 0.4em;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.4;
+  animation: talkingDotBounce 1.2s infinite ease-in-out;
+}
+
+.typingDots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.typingDots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes talkingDotBounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-0.3em);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typingDots span {
+    animation: none;
+    opacity: 0.7;
+  }
 }

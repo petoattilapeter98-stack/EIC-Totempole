@@ -30,8 +30,8 @@ export const examplePrompts: readonly ExamplePrompt[] = [
   {
     domain: 'employees',
     text: {
-      en: 'Who leads the engineering team?',
-      hu: 'Ki vezeti a mérnöki csapatot?',
+      en: 'How does TEKsystems differentiate itself from its competitors?',
+      hu: 'Hogyan különbözteti meg magát a TEKsystems a versenytársaitól?',
     },
   },
 ];

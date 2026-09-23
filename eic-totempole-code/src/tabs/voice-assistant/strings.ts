@@ -12,10 +12,10 @@ export interface VoiceAssistantStrings {
   readonly connecting: string;
   readonly loadError: string;
   readonly retry: string;
-  /** Shown while the mic is actively capturing audio. */
+  /** Shown on the mic button while it is held down and actively capturing audio. */
   readonly listening: string;
-  /** Shown while connected but between utterances (recognition briefly restarting). */
-  readonly waiting: string;
+  /** Shown on the mic button while it is not pressed (push-to-talk idle state). */
+  readonly holdToTalk: string;
   /** This browser has no SpeechRecognition implementation at all (research.md R13: Chrome-only in practice). */
   readonly micNotSupported: string;
   /** Visitor/operator denied the microphone permission prompt. */
@@ -24,12 +24,14 @@ export interface VoiceAssistantStrings {
   readonly micUnavailable: string;
   /** A recognized utterance failed to reach the assistant (Direct Line activity post failed). */
   readonly sendError: string;
+  /** Shown in the transcript from the moment a question is sent until the assistant's reply arrives. */
+  readonly thinking: string;
 }
 
 export const voiceAssistantStrings = {
   en: {
     subheading:
-      'Tap Start and just speak — ask about the Innovation Centre, the company, or our people.',
+      'Tap Start, then hold the mic button and speak — ask about the Innovation Centre, the company, or our people.',
     promptsHeading: 'Try asking:',
     startButton: 'Start Assistant',
     endButton: 'End Conversation',
@@ -37,16 +39,17 @@ export const voiceAssistantStrings = {
     loadError: "The assistant couldn't be reached. Please try again.",
     retry: 'Try Again',
     listening: 'Listening…',
-    waiting: 'Ready — just speak',
+    holdToTalk: 'Hold to Talk',
     micNotSupported:
       "This browser can't provide speech recognition. Please open this kiosk in Google Chrome.",
     micNoPermission: 'Microphone access is needed to talk to the assistant. Please allow it and try again.',
     micUnavailable: 'Speech recognition is temporarily unavailable. Please try again.',
     sendError: "That didn't reach the assistant. Please try asking again.",
+    thinking: 'The assistant is thinking…',
   },
   hu: {
     subheading:
-      'Érintse meg az Indítás gombot, és csak beszéljen — kérdezzen az Innovációs Központról, a vállalatról vagy munkatársainkról.',
+      'Érintse meg az Indítás gombot, majd tartsa lenyomva a mikrofon gombot, és beszéljen — kérdezzen az Innovációs Központról, a vállalatról vagy munkatársainkról.',
     promptsHeading: 'Próbálja ki:',
     startButton: 'Asszisztens Indítása',
     endButton: 'Beszélgetés Befejezése',
@@ -54,13 +57,14 @@ export const voiceAssistantStrings = {
     loadError: 'Az asszisztens nem érhető el. Kérjük, próbálja újra.',
     retry: 'Újra Próbálom',
     listening: 'Hallgatom…',
-    waiting: 'Készen áll — csak beszéljen',
+    holdToTalk: 'Tartsa lenyomva a beszédhez',
     micNotSupported:
       'Ez a böngésző nem támogatja a beszédfelismerést. Kérjük, nyissa meg a kioszkot Google Chrome-ban.',
     micNoPermission:
       'A mikrofon engedélyezése szükséges az asszisztenssel való beszélgetéshez. Engedélyezze, majd próbálja újra.',
     micUnavailable: 'A beszédfelismerés átmenetileg nem érhető el. Kérjük, próbálja újra.',
     sendError: 'Ez nem jutott el az asszisztenshez. Kérjük, kérdezzen újra.',
+    thinking: 'Az asszisztens gondolkodik…',
   },
 } satisfies Record<Locale, VoiceAssistantStrings>;
 

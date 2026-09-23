@@ -4,6 +4,8 @@ Validates the tab, panel, and lifecycle behavior described in plan.md.
 
 **Execution status (2026-09-10)**: this file replaces the 2026-09-09 sign-in-era quickstart (kept in git history) following the pivot to a hands-free Direct Line integration (research.md R12/R13). **All scenarios below, including Scenario 2, have been executed against the real bot** — no infrastructure of any kind is required (research.md R13's correction: the bot's Direct Line channel is reached via a public, unauthenticated token endpoint, not a server-side proxy). Verified via a real Chromium/Playwright run against the actual dev build: tapped Start and confirmed the panel reaches the listening state with a real Direct Line connection, no mocks.
 
+**Updated 2026-09-23**: Scenario 2 is rewritten for push-to-talk (spec FR-004, reverted from hands-free; research.md R17) and extended for the thinking indicator (FR-025) and formatted replies (FR-026, research.md R15). Live-agent verification this session was done sparingly, deliberately (a limited-credit constraint): three round trips total, used to capture a real reply sample for the markdown renderer's tests and to discover the echo-dedup bug (research.md R16) — the push-to-talk mechanics, the thinking indicator, and the renderer's output are otherwise verified by their own unit tests plus one static (no-agent-call) Playwright screenshot of the idle screen, not by repeatedly exercising the live agent.
+
 ## Prerequisites
 
 - Node/npm installed, repo dependencies installed (`npm install`).
@@ -25,18 +27,20 @@ Open the printed local URL **in Google Chrome**. The kiosk shell loads with Boar
 2. **Expect**: content region shows a heading, three example prompts, and a "Start Assistant" button — no connection established yet, no page scroll introduced.
 3. **Expect**: at least one example prompt visibly relates to each of the three domains (Innovation Centre, company, employees).
 
-## Scenario 2 — A completely hands-free conversation (FR-002, FR-004, FR-019–FR-024, User Story 1) — REPLACES the 2026-09-09 sign-in scenario
+## Scenario 2 — A push-to-talk conversation with formatted replies (FR-002, FR-004, FR-019–FR-026, User Story 1) — REPLACES the 2026-09-09 sign-in scenario; listening model updated 2026-09-23
 
 1. From the idle state, tap "Start Assistant".
 2. **Expect**: no sign-in prompt or popup of any kind appears — the agent no longer requires one (Clarifications, Session 2026-09-10). Chrome may show its own native "Allow microphone access?" permission prompt the first time this origin uses speech recognition; allow it.
-3. **Expect**: once connected, a listening indicator shows ("Listening…" while actively capturing audio, "Ready — just speak" in the brief windows between restarts) — no push-to-talk button anywhere in the panel.
-4. Speak a question out loud (e.g., "What is this Innovation Centre for?") without touching the screen.
-5. **Expect**: the recognized text appears in the on-screen transcript as a visitor line, automatically — no "send" tap.
-6. **Expect**: the assistant's reply appears as an assistant line in the same transcript shortly after, as on-screen text (no synthesized speech — spec FR-005, Session 2026-09-10 Q5).
-7. Speak a follow-up question, again with no tap.
-8. **Expect**: the follow-up is recognized and answered the same way, with the panel still listening the whole time — confirms User Story 1's "no button between Start and End" requirement.
-9. **Expect (browser mismatch)**: if this is opened in a non-Chrome browser (or `SpeechRecognition` is otherwise unavailable), step 2 instead shows a clear "this browser can't provide speech recognition" message rather than a silently non-functional listening indicator (spec Edge Cases, FR-010).
-10. **Expect (mic permission denied)**: if the visitor/operator denies the microphone permission prompt, the panel shows a clear "microphone access is needed" message rather than sitting silently as if listening (spec Edge Cases, FR-010).
+3. **Expect**: once connected, a talk button shows reading "Hold to Talk" — the mic is not capturing anything yet (2026-09-23: push-to-talk, spec FR-004, Clarifications Session 2026-09-23 Q6).
+4. Press and hold the talk button, speak a question out loud (e.g., "What programs does the Innovation Centre run?"), then release the button.
+5. **Expect**: while held, the button reads "Listening…"; the recognized text appears in the on-screen transcript as a visitor line once you release the button and finish speaking — no separate "send" tap.
+6. **Expect**: immediately after releasing, a "thinking" indicator (small animated bubble, "The assistant is thinking…") appears in the transcript (FR-025, new 2026-09-23).
+7. **Expect**: the assistant's reply appears as an assistant line in the same transcript shortly after, replacing the thinking indicator, as on-screen text (no synthesized speech — spec FR-005, Session 2026-09-10 Q5) — and **legibly formatted**, not raw markdown (FR-026, new 2026-09-23): a bulleted answer renders as a real list, not lines starting with a literal `•`; **bold** text is bold, not wrapped in literal asterisks; a citation reference (if any) shows as a small marker, not a raw `[1]: cite:1 "...docx"` footnote line.
+8. Press and hold the talk button again to ask a follow-up question, release it.
+9. **Expect**: the follow-up is recognized and answered the same way, with Start/End/the talk button remaining the only three controls in the panel — confirms User Story 1's push-to-talk requirement.
+10. **Expect (browser mismatch)**: if this is opened in a non-Chrome browser (or `SpeechRecognition` is otherwise unavailable), step 2 instead shows a clear "this browser can't provide speech recognition" message rather than a silently non-functional talk button (spec Edge Cases, FR-010).
+11. **Expect (mic permission denied)**: if the visitor/operator denies the microphone permission prompt, the panel shows a clear "microphone access is needed" message rather than sitting silently as if listening (spec Edge Cases, FR-010).
+12. **Expect (nothing said)**: releasing the talk button having said nothing (or too quietly to pick up) sends nothing — the button simply returns to "Hold to Talk" (spec Edge Cases, 2026-09-23).
 
 ## Scenario 3 — Starting the assistant / connection states (FR-001, FR-002, FR-023)
 
@@ -49,7 +53,7 @@ Open the printed local URL **in Google Chrome**. The kiosk shell loads with Boar
 ## Scenario 4 — Ending and returning to idle (FR-008, FR-012)
 
 1. With the panel active (Scenario 2/3), tap "End".
-2. **Expect**: the panel returns to the idle state (example prompts + Start button) inline, no confirmation dialog. The Direct Line WebSocket is closed and speech recognition is aborted (contracts/direct-line-client-contract.md guarantee 3, contracts/speech-recognition-contract.md guarantee 3) — verify via devtools Network/WS tab that no lingering connection remains.
+2. **Expect**: the panel returns to the idle state (example prompts + Start button) inline, no confirmation dialog. The Direct Line WebSocket is closed (contracts/direct-line-client-contract.md guarantee 3) and, if the talk button happened to be held, speech recognition is stopped (contracts/speech-recognition-contract.md guarantee 3, corrected 2026-09-23 — `stop()`, not `abort()`) — verify via devtools Network/WS tab that no lingering connection remains.
 3. Repeat Scenario 2/3, then instead of tapping End, switch to a different tab and back.
 4. **Expect**: the assistant tab is back at idle, not wherever it was left, and a fresh Direct Line conversation is started on the next Start tap — no prior transcript carries over (research.md R6, unmount-based clearing).
 
@@ -85,7 +89,7 @@ npm run test:layout
 npm run typecheck && npm run test
 ```
 
-**Expect**: `useSpeechRecognition.test.ts` covers not-supported detection, active-gated startup, final-vs-interim transcript handling, auto-restart on `onend`, cleanup-on-inactive/unmount, and error classification. `VoiceConversation.test.tsx` covers the connecting → ready transition, posting a recognized utterance (with a mocked `directLineClient`), rendering an incoming bot reply, the error/retry path, and the not-supported banner. `AgentPanel.test.tsx` covers idle ↔ active transitions and i18n with `VoiceConversation` mocked out. **Executed 2026-09-10**: typecheck clean, all suites passing.
+**Expect**: `useSpeechRecognition.test.ts` covers not-supported detection, active-gated startup, final-vs-interim transcript handling, auto-restart on `onend`, cleanup-on-inactive/unmount (2026-09-23: asserts `stop()` not `abort()`, and that a final result delivered after cleanup still reaches `onFinalTranscript`), and error classification. `VoiceConversation.test.tsx` covers the connecting → ready transition, the push-to-talk button only starting recognition once pressed and stopping it on release (2026-09-23), posting a recognized utterance (with a mocked `directLineClient`), rendering an incoming bot reply, the Direct Line echo *not* being rendered as a duplicate assistant line (2026-09-23, research.md R16), markdown rendering in a bot reply (2026-09-23), the thinking indicator appearing/clearing around a reply or a send failure (2026-09-23), the error/retry path, and the not-supported banner. `markdown.test.tsx` (2026-09-23, new) covers each supported construct plus the actual reply sample captured from the live agent. `AgentPanel.test.tsx` covers idle ↔ active transitions and i18n with `VoiceConversation` mocked out. **Executed 2026-09-23**: typecheck clean, 237/237 unit tests, 29/29 layout tests, clean production build.
 
 ## Validating actual question-answering (User Stories 2-4)
 

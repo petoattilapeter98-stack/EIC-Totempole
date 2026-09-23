@@ -12,16 +12,18 @@ class FakeSpeechRecognition extends EventTarget implements SpeechRecognition {
   onresult: ((event: SpeechRecognitionEvent) => void) | null = null;
   onerror: ((event: SpeechRecognitionErrorEvent) => void) | null = null;
   aborted = false;
+  stopped = false;
   startCount = 0;
 
   start() {
     this.startCount += 1;
     this.aborted = false;
+    this.stopped = false;
     this.onstart?.();
   }
 
   stop() {
-    // Not used by the hook (it always aborts), kept for interface completeness.
+    this.stopped = true;
   }
 
   abort() {
@@ -129,7 +131,7 @@ describe('useSpeechRecognition', () => {
     expect(lastInstance?.startCount).toBe(startsBefore + 1);
   });
 
-  it('aborts and does not restart on cleanup (active -> false)', async () => {
+  it('stops (not aborts) and does not restart on cleanup (active -> false), so a trailing utterance is not discarded', async () => {
     const onFinalTranscript = vi.fn();
     const { rerender } = renderHook(
       ({ active }: { active: boolean }) =>
@@ -141,10 +143,39 @@ describe('useSpeechRecognition', () => {
 
     rerender({ active: false });
 
-    expect(instance?.aborted).toBe(true);
+    // stop() (not abort()) so Chrome finishes processing already-captured
+    // audio instead of silently dropping the last words spoken right before
+    // the push-to-talk button was released.
+    expect(instance?.stopped).toBe(true);
+    expect(instance?.aborted).toBe(false);
     const startsAtCleanup = instance?.startCount ?? 0;
     instance?.onend?.();
     expect(instance?.startCount).toBe(startsAtCleanup);
+  });
+
+  it('still delivers a final result that arrives after cleanup (the trailing result stop() produces)', async () => {
+    const onFinalTranscript = vi.fn();
+    const { rerender } = renderHook(
+      ({ active }: { active: boolean }) =>
+        useSpeechRecognition({ lang: 'en-US', active, onFinalTranscript }),
+      { initialProps: { active: true } },
+    );
+    await waitFor(() => expect(lastInstance).not.toBeNull());
+    const instance = lastInstance;
+
+    rerender({ active: false });
+    expect(instance?.stopped).toBe(true);
+
+    // The trailing final result stop() triggers arrives asynchronously,
+    // after cleanup has already run -- it must still reach the caller.
+    act(() => {
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: makeResultList([{ transcript: 'trailing words', isFinal: true }]),
+      } as SpeechRecognitionEvent);
+    });
+
+    expect(onFinalTranscript).toHaveBeenCalledWith('trailing words');
   });
 
   it('maps a permission-denied error distinctly from a generic failure', async () => {

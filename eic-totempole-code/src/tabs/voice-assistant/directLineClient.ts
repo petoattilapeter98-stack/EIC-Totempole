@@ -110,9 +110,20 @@ export async function postDirectLineMessage(
 
 /**
  * Opens the Direct Line WebSocket activity stream and invokes `onActivity`
- * for every activity NOT authored by this app itself (i.e. the bot's own
- * replies). Returns an unsubscribe function that closes the socket --
- * callers MUST call it on teardown (Constitution V: no leaked connection).
+ * for every activity whose `from.id` isn't the literal `KIOSK_VISITOR_ID`
+ * this app posts with. That check does NOT filter out this app's own
+ * echoed messages in practice: verified against the live agent (research.md
+ * R16), Direct Line assigns its own server-side session GUID to the echo's
+ * `from.id`, never the client-supplied value -- so nearly every activity,
+ * including echoes, reaches `onActivity`. Real echo filtering is done by
+ * the caller (`VoiceConversation.tsx`, matching on outgoing text) --
+ * see `contracts/direct-line-client-contract.md` guarantee 2 (corrected
+ * 2026-09-23). This check is left in place as a harmless no-op rather than
+ * removed, since a `from.id` that genuinely equals `KIOSK_VISITOR_ID` (were
+ * Direct Line ever to honor it) would still be correctly dropped here.
+ *
+ * Returns an unsubscribe function that closes the socket -- callers MUST
+ * call it on teardown (Constitution V: no leaked connection).
  *
  * Direct Line's WebSocket protocol sends periodic empty-string keepalive
  * frames (no `data`), which are silently ignored here rather than treated as

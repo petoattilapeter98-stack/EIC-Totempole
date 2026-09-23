@@ -2,6 +2,8 @@
 
 **Updated 2026-09-10**: this codebase now owns more local state than the 2026-09-09 iframe-embed design did — it drives speech recognition directly and holds a live Direct Line connection, rather than delegating both to an opaque embedded widget. The entities below reflect the current (Direct Line + Chrome STT) design; see git history for the superseded iframe-era version of this file.
 
+**Updated 2026-09-23**: `VoiceConversation` gained three more pieces of local state for push-to-talk, the thinking indicator, and the Direct Line echo-dedup fix (research.md R16/R17) — see `TranscriptEntry`'s section below for `talking`/`awaitingReply`, and the new "Echo dedup tracking" entity.
+
 ## Note on spec entities vs. this codebase
 
 spec.md's Key Entities section (Voice Query, Assistant Response, Knowledge Domain, Conversation Session, Employee Profile) describes the *conceptual* shape of the assistant's behavior. Domain routing, answer generation, and the approved employee dataset are still realized entirely **inside** the Copilot Studio agent, which this codebase still treats as an opaque third party for *content* purposes — none of those entities' actual data (what the agent knows, how it routes) is stored or modeled here. What changed 2026-09-10: this codebase now owns the **transport** to that agent (Direct Line) and the **recognition** of what the visitor said (Chrome's SpeechRecognition), which it did not before — see DirectLineConversation and TranscriptEntry below.
@@ -48,6 +50,30 @@ The on-screen record of the current conversation (spec FR-005: text-only replies
 
 **Bounded growth (Constitution V)**: capped at the 12 most recent entries — older entries are dropped, not accumulated indefinitely, since a kiosk conversation could otherwise run for the panel's entire active lifetime with no natural upper bound. Cleared to `[]` on every fresh connection attempt (mount or retry) and discarded entirely on unmount, same as `AgentPanelState` above.
 
+**Rendering (2026-09-23)**: an `assistant`-speaker entry's `text` is passed through `renderMarkdown()` (`markdown.tsx`) rather than shown as raw text, per FR-026 — see research.md R15. A `visitor`-speaker entry is always the raw recognized transcript, never markdown-rendered (there is nothing to render; it is the visitor's own words).
+
+### Push-to-talk / thinking-indicator local state (2026-09-23, new)
+
+Two more `useState` fields in `VoiceConversation`, alongside `status`/`transcript`/`sendError` above:
+
+| Field | Type | Notes |
+|---|---|---|
+| `talking` | `boolean` | True only while the visitor is holding the talk button (`onPointerDown` → `onPointerUp`/`onPointerLeave`/`onPointerCancel`). Drives `useSpeechRecognition`'s `active` option (`status === 'ready' && talking`) — see research.md R17 and `contracts/speech-recognition-contract.md`. |
+| `awaitingReply` | `boolean` | True from the moment a recognized utterance is posted (FR-025's "working" indicator) until a genuine assistant reply is appended, or the post itself fails. Rendered as a small animated bubble in the transcript (`role="status"`, reduced-motion-aware). |
+
+Both reset to `false` on every fresh connection attempt (mount or retry), same lifecycle as `TranscriptEntry`.
+
+### Echo dedup tracking (2026-09-23, new — see research.md R16)
+
+Two `useRef` values in `VoiceConversation`, not React state (neither should trigger a re-render):
+
+| Field | Type | Notes |
+|---|---|---|
+| `pendingSentTexts` | `string[]` (capped at 5) | The exact text of each recently-posted outgoing message, queued when posted and removed once matched against an incoming echo. Bounded (Constitution V) since an echo is expected within one round trip, never accumulating across a whole conversation. |
+| `knownSelfIds` | `Set<string>` | Direct Line `from.id` values confirmed (by a prior text match) to be this app's own echoed activity, not the bot. Once an id is learned, later activities from it are dropped without needing another text match. |
+
+Both are reset (`[]` / `new Set()`) on every fresh connection attempt, same as the state fields above — a new conversation gets a new, unlearned set of self-ids, since Direct Line assigns a fresh session GUID each time (research.md R16).
+
 ### ExamplePrompt
 
 Static, localized content satisfying FR-016 (discoverability). Authored data, not runtime state.
@@ -77,4 +103,4 @@ VoiceConversation    ──holds───────────────> T
 VoiceConversation    ──drives───────────────> useSpeechRecognition (active while status === 'active')
 ```
 
-No entity here has a relationship to spec 001's `KioskState` beyond reading `locale` (for `ExamplePrompt`/button text, and as the speech-recognition language tag) and calling `reset()` (spec 001's idle-countdown keepalive — called directly on every recognized utterance and every bot reply, since there is no iframe boundary left to bridge, unlike the 2026-09-09 design's `useIframeIdleKeepalive`) — both already exposed by `useKiosk()`. This feature does not add any field to `KioskState` itself; `resetInteractionState` (spec 001) is unchanged and continues to only reset `activeTab`, which is what tears this feature's local state down via unmount.
+No entity here has a relationship to spec 001's `KioskState` beyond reading `locale` (for `ExamplePrompt`/button text, and as the speech-recognition language tag) and calling the idle-countdown keepalive — called directly on every recognized utterance and every bot reply, since there is no iframe boundary left to bridge, unlike the 2026-09-09 design's `useIframeIdleKeepalive`. **Naming note**: `useKiosk()` exposes this capability as `signalActivity` (renamed from `reset` while resolving a merge conflict against a parallel feature that added the same capability under that name — see this repo's PR history); `VoiceConversation`'s own `reset` prop is a local name `AgentPanel.tsx` binds to `signalActivity` at the call site, so this file's and quickstart.md's references to "`reset()`" mean that local prop, not a `KioskState` field of that name. This feature does not add any field to `KioskState` itself; `resetInteractionState` (spec 001) is unchanged and continues to only reset `activeTab`, which is what tears this feature's local state down via unmount.

@@ -29,14 +29,20 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
 }
 
 /**
- * Chrome's built-in speech-to-text (Web Speech API), run continuously while
- * `active` is true -- no push-to-talk button (see spec.md Clarifications,
- * 2026-09-10 amendment: the visitor presses nothing between Start and End).
+ * Chrome's built-in speech-to-text (Web Speech API), run for as long as
+ * `active` is true -- driven by a push-to-talk button (AgentPanel/
+ * VoiceConversation): `active` follows the button being held down, so a
+ * demo presenter controls exactly when the mic is capturing instead of the
+ * kiosk listening continuously, including while the assistant is composing
+ * its reply.
  *
- * Chrome's `continuous: true` mode still stops itself after a pause in
- * speech (`onend` fires); this hook restarts it automatically while `active`
- * remains true, which is the standard way to get an effectively always-on
- * listening session out of this API.
+ * Chrome's `continuous: true` mode can still stop itself mid-hold after a
+ * pause in speech (`onend` fires); this hook restarts it automatically while
+ * `active` remains true, so a brief pause doesn't end the utterance early.
+ * On an intentional deactivation (button released, or unmount) it calls
+ * `stop()` rather than `abort()`, so Chrome finishes processing whatever was
+ * already captured and still fires a final result for it -- `abort()` would
+ * silently drop the last few words spoken right before release.
  */
 export function useSpeechRecognition({
   lang,
@@ -88,7 +94,14 @@ export function useSpeechRecognition({
           interim += alternative.transcript;
         }
       }
-      setInterimTranscript(interim);
+      // Final results (above) are always delivered, including the trailing
+      // one stop() produces after release -- but the interim display itself
+      // is skipped once cleanup has already cleared it, so a late partial
+      // result from the outgoing instance can't flash stale text over a
+      // newly started press.
+      if (!stoppedByCleanup) {
+        setInterimTranscript(interim);
+      }
     };
 
     recognition.onerror = (event) => {
@@ -114,10 +127,13 @@ export function useSpeechRecognition({
     return () => {
       stoppedByCleanup = true;
       recognition.onstart = null;
-      recognition.onresult = null;
       recognition.onerror = null;
       recognition.onend = null;
-      recognition.abort();
+      // `onresult` deliberately stays attached: stop() (unlike abort())
+      // keeps processing whatever audio it already captured and still fires
+      // a final result for it a moment later, which is exactly the tail end
+      // of what the visitor just said as they released the button.
+      recognition.stop();
       setListening(false);
       setInterimTranscript('');
     };
