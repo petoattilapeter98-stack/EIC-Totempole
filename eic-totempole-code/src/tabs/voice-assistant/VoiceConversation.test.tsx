@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -70,7 +70,7 @@ afterEach(() => {
 });
 
 describe('VoiceConversation', () => {
-  it('shows connecting, then the listening indicator once Direct Line and speech recognition are both ready', async () => {
+  it('shows connecting, then Hold to Talk once ready -- and only starts recognition once the talk button is pressed', async () => {
     stubSpeechRecognition();
     startDirectLineConversation.mockResolvedValue(CONVERSATION);
     subscribeToDirectLineActivities.mockReturnValue(() => {});
@@ -79,21 +79,35 @@ describe('VoiceConversation', () => {
 
     expect(screen.getByText(voiceAssistantStrings.en.connecting)).toBeInTheDocument();
 
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    // Ready, but the mic must not be capturing until the button is held --
+    // that's the whole point of push-to-talk (no ambient/continuous capture).
+    expect(lastRecognition).toBeNull();
+
+    fireEvent.pointerDown(talkButton);
     await waitFor(() => expect(screen.getByText(voiceAssistantStrings.en.listening)).toBeInTheDocument());
+    expect(lastRecognition).not.toBeNull();
   });
 
-  it('posts a recognized final utterance to Direct Line, renders it, and re-arms the idle countdown -- with no button press', async () => {
+  it('posts a recognized final utterance to Direct Line, renders it, and re-arms the idle countdown', async () => {
     stubSpeechRecognition();
     startDirectLineConversation.mockResolvedValue(CONVERSATION);
     subscribeToDirectLineActivities.mockReturnValue(() => {});
     const reset = vi.fn();
 
     render(<VoiceConversation locale="en" reset={reset} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
     await waitFor(() => expect(lastRecognition).not.toBeNull());
 
     act(() => {
       lastRecognition?.onresult?.(finalResult('what is the innovation centre'));
     });
+    fireEvent.pointerUp(talkButton);
 
     expect(await screen.findByText('what is the innovation centre')).toBeInTheDocument();
     expect(reset).toHaveBeenCalled();
@@ -118,11 +132,16 @@ describe('VoiceConversation', () => {
     );
 
     render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
     await waitFor(() => expect(lastRecognition).not.toBeNull());
 
     act(() => {
       lastRecognition?.onresult?.(finalResult('what is the innovation centre'));
     });
+    fireEvent.pointerUp(talkButton);
     expect(await screen.findByText('what is the innovation centre')).toBeInTheDocument();
 
     // Direct Line echoes the posted message back with a server-assigned
@@ -161,6 +180,35 @@ describe('VoiceConversation', () => {
     expect(
       await screen.findByText('The Innovation Centre hosts several programmes.'),
     ).toBeInTheDocument();
+  });
+
+  it('stops capturing audio when the talk button is released, and resumes on the next press', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    subscribeToDirectLineActivities.mockReturnValue(() => {});
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+    const firstRecognition = lastRecognition;
+    const stopSpy = vi.spyOn(firstRecognition!, 'stop');
+
+    fireEvent.pointerUp(talkButton);
+    // Releasing must not just hide the "listening" label -- it must actually
+    // stop the underlying recognition session, not leave the mic capturing
+    // in the background (e.g. picking up the assistant's own reply).
+    expect(stopSpy).toHaveBeenCalled();
+    await waitFor(() =>
+      expect(screen.getByText(voiceAssistantStrings.en.holdToTalk)).toBeInTheDocument(),
+    );
+
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBe(firstRecognition));
+    expect(lastRecognition).not.toBeNull();
   });
 
   it('renders an incoming bot reply as an assistant line and re-arms the idle countdown', async () => {
@@ -237,7 +285,9 @@ describe('VoiceConversation', () => {
     expect(await screen.findByText(voiceAssistantStrings.en.loadError)).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.retry }));
 
-    await waitFor(() => expect(screen.getByText(voiceAssistantStrings.en.listening)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText(voiceAssistantStrings.en.holdToTalk)).toBeInTheDocument(),
+    );
     expect(startDirectLineConversation).toHaveBeenCalledTimes(2);
   });
 

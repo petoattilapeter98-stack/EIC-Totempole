@@ -49,25 +49,51 @@
   text-align: center;
 }
 
-.listeningIndicator {
+.talkButton,
+.talkButtonActive {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  color: var(--color-text-muted);
+
+  min-width: var(--touch-target-min);
+  min-height: var(--touch-target-min);
+  padding: var(--space-3) var(--space-6);
+
+  border-radius: var(--radius-pill);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 700;
+  cursor: pointer;
+
+  /* The pressed state is driven by pointer down/up (below), not native
+     :active timing, so it stays visually "held" for as long as the visitor
+     keeps their finger down -- and that hold must not also trigger text
+     selection or a touch long-press/scroll gesture. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+
+  transition: background var(--transition-touch), color var(--transition-touch),
+    border-color var(--transition-touch);
 }
 
-.micIcon,
-.micIconActive {
+.talkButton {
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border: 1px solid var(--accent-border);
+}
+
+.talkButtonActive {
+  background: var(--accent-color);
+  color: var(--color-surface);
+  border: 1px solid var(--accent-color);
+}
+
+.micIcon {
   width: var(--space-6);
   height: var(--space-6);
-}
-
-.micIconActive {
-  color: var(--accent-color);
+  color: inherit;
 }
 
 .transcript {

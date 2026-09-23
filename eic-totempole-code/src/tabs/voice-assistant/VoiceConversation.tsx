@@ -35,12 +35,15 @@ const MAX_TRANSCRIPT_ENTRIES = 12;
 const MAX_PENDING_ECHOES = 5;
 
 /**
- * Drives the hands-free voice conversation once `AgentPanel` mounts this
- * component (spec.md 2026-09-10 amendment): connects to the bot's Direct
- * Line channel directly (no visible third-party chat UI), listens
- * continuously via Chrome's SpeechRecognition, posts each recognized
- * utterance as a message activity, and renders the bot's replies as
- * on-screen transcript text. No button is needed between Start and End.
+ * Drives the voice conversation once `AgentPanel` mounts this component
+ * (spec.md 2026-09-10 amendment; push-to-talk amendment 2026-09-23):
+ * connects to the bot's Direct Line channel directly (no visible
+ * third-party chat UI), posts each recognized utterance as a message
+ * activity, and renders the bot's replies as on-screen transcript text.
+ *
+ * The mic is push-to-talk, not always-on: it only captures while the
+ * visitor holds the talk button, so a noisy room or the assistant's own
+ * reply being read out loud can't be picked up as a new question.
  */
 export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   const s = getVoiceAssistantStrings(locale);
@@ -48,6 +51,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   const [transcript, setTranscript] = useState<readonly TranscriptEntry[]>([]);
   const [sendError, setSendError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [talking, setTalking] = useState(false);
 
   const conversationRef = useRef<DirectLineConversation | null>(null);
   const resetRef = useRef(reset);
@@ -83,6 +87,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
     setStatus('connecting');
     setTranscript([]);
     setSendError(false);
+    setTalking(false);
     pendingSentTexts.current = [];
     knownSelfIds.current = new Set();
 
@@ -138,7 +143,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
 
   const speech = useSpeechRecognition({
     lang: LOCALE_TAGS[locale],
-    active: status === 'ready',
+    active: status === 'ready' && talking,
     onFinalTranscript: (text) => {
       if (!text || !conversationRef.current) {
         return;
@@ -153,6 +158,9 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   });
 
   const handleRetry = () => setReloadKey((key) => key + 1);
+
+  const handleTalkStart = () => setTalking(true);
+  const handleTalkEnd = () => setTalking(false);
 
   if (status !== 'ready') {
     return (
@@ -190,13 +198,20 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
         </p>
       )}
 
-      <div className={styles.listeningIndicator} aria-live="polite">
-        <Mic
-          className={speech.listening ? styles.micIconActive : styles.micIcon}
-          aria-hidden="true"
-        />
-        <span>{speech.listening ? s.listening : s.waiting}</span>
-      </div>
+      <button
+        type="button"
+        className={talking ? styles.talkButtonActive : styles.talkButton}
+        aria-pressed={talking}
+        aria-label={talking ? s.listening : s.holdToTalk}
+        onPointerDown={handleTalkStart}
+        onPointerUp={handleTalkEnd}
+        onPointerLeave={handleTalkEnd}
+        onPointerCancel={handleTalkEnd}
+        onContextMenu={(event) => event.preventDefault()}
+      >
+        <Mic className={styles.micIcon} aria-hidden="true" />
+        <span>{talking ? s.listening : s.holdToTalk}</span>
+      </button>
 
       <div className={styles.transcript} aria-live="polite">
         {transcript.length === 0 && !speech.interimTranscript && (
