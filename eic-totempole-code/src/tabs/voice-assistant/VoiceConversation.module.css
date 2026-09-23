@@ -113,6 +113,49 @@
   color: var(--color-text);
 }
 
+/* Markdown block elements nested inside an assistant bubble (markdown.tsx). */
+.assistantLine p {
+  margin: 0 0 var(--space-3) 0;
+}
+
+.assistantLine ul,
+.assistantLine ol {
+  margin: 0 0 var(--space-3) 0;
+  padding-left: var(--space-5);
+}
+
+.assistantLine li {
+  margin-bottom: var(--space-2);
+}
+
+.assistantLine p:last-child,
+.assistantLine ul:last-child,
+.assistantLine ol:last-child,
+.assistantLine li:last-child {
+  margin-bottom: 0;
+}
+
+.assistantLine strong {
+  font-weight: 700;
+}
+
+.assistantLine code {
+  background: rgba(0, 0, 0, 0.08);
+  padding: 0.05em 0.35em;
+  border-radius: var(--radius-md);
+  font-size: 0.9em;
+}
+
+.assistantLine a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.assistantLine sup {
+  font-size: 0.7em;
+  opacity: 0.7;
+}
+
 .interimLine {
   align-self: flex-end;
   background: transparent;

@@ -104,6 +104,65 @@ describe('VoiceConversation', () => {
     );
   });
 
+  it("does not render Direct Line's echo of the visitor's own posted message as an assistant line", async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    const activityHandler: { current: ((activity: DirectLineActivity) => void) | null } = {
+      current: null,
+    };
+    subscribeToDirectLineActivities.mockImplementation(
+      (_streamUrl: string, handler: (a: DirectLineActivity) => void) => {
+        activityHandler.current = handler;
+        return () => {};
+      },
+    );
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('what is the innovation centre'));
+    });
+    expect(await screen.findByText('what is the innovation centre')).toBeInTheDocument();
+
+    // Direct Line echoes the posted message back with a server-assigned
+    // from.id this app never sent -- it must be recognized as an echo and
+    // dropped, not re-rendered as a second, assistant-styled bubble.
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'echo-session-id-1' },
+        text: 'what is the innovation centre',
+      });
+    });
+
+    expect(screen.getAllByText('what is the innovation centre')).toHaveLength(1);
+
+    // A later activity from that same now-known-self id must also be
+    // dropped, even without an exact text match (covers retries/rephrasing
+    // of the echo).
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'echo-session-id-1' },
+        text: 'something else entirely',
+      });
+    });
+    expect(screen.queryByText('something else entirely')).not.toBeInTheDocument();
+
+    // A genuine reply from the bot's own (different) id still renders.
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'bot-id' },
+        text: 'The Innovation Centre hosts several programmes.',
+      });
+    });
+    expect(
+      await screen.findByText('The Innovation Centre hosts several programmes.'),
+    ).toBeInTheDocument();
+  });
+
   it('renders an incoming bot reply as an assistant line and re-arms the idle countdown', async () => {
     stubSpeechRecognition();
     startDirectLineConversation.mockResolvedValue(CONVERSATION);
@@ -132,6 +191,38 @@ describe('VoiceConversation', () => {
 
     expect(await screen.findByText('The Innovation Centre hosts...')).toBeInTheDocument();
     expect(reset).toHaveBeenCalled();
+  });
+
+  it('renders markdown in a bot reply as real elements, not literal syntax', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    const activityHandler: { current: ((activity: DirectLineActivity) => void) | null } = {
+      current: null,
+    };
+    subscribeToDirectLineActivities.mockImplementation(
+      (_streamUrl: string, handler: (a: DirectLineActivity) => void) => {
+        activityHandler.current = handler;
+        return () => {};
+      },
+    );
+
+    const { container } = render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    await waitFor(() => expect(activityHandler.current).not.toBeNull());
+
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'bot' },
+        text: 'Here are the **key** programmes:\n\n• RISE Programme\n\n• Leader Foundations',
+      });
+    });
+
+    await screen.findByText('RISE Programme');
+    expect(container.querySelector('ul > li')).not.toBeNull();
+    expect(container.querySelector('strong')?.textContent).toBe('key');
+    // The raw ** and • characters must never reach the DOM as literal text.
+    expect(screen.queryByText(/\*\*/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/•/)).not.toBeInTheDocument();
   });
 
   it('shows a recoverable error with Retry when the Direct Line connection fails, and reconnects on retry', async () => {
