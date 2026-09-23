@@ -52,6 +52,8 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   const [sendError, setSendError] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [talking, setTalking] = useState(false);
+  /** True from the moment a question is sent until the assistant's reply (or an error) arrives. */
+  const [awaitingReply, setAwaitingReply] = useState(false);
 
   const conversationRef = useRef<DirectLineConversation | null>(null);
   const resetRef = useRef(reset);
@@ -88,6 +90,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
     setTranscript([]);
     setSendError(false);
     setTalking(false);
+    setAwaitingReply(false);
     pendingSentTexts.current = [];
     knownSelfIds.current = new Set();
 
@@ -119,6 +122,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
           }
 
           appendEntry('assistant', activity.text);
+          setAwaitingReply(false);
           resetRef.current();
         },
         () => {
@@ -150,9 +154,11 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
       }
       appendEntry('visitor', text);
       resetRef.current();
+      setAwaitingReply(true);
       pendingSentTexts.current = [...pendingSentTexts.current, text].slice(-MAX_PENDING_ECHOES);
       postDirectLineMessage(conversationRef.current, text, LOCALE_TAGS[locale]).catch(() => {
         setSendError(true);
+        setAwaitingReply(false);
       });
     },
   });
@@ -225,6 +231,16 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
             {entry.speaker === 'assistant' ? renderMarkdown(entry.text, `entry-${entry.id}`) : entry.text}
           </div>
         ))}
+        {awaitingReply && (
+          <div className={`${styles.assistantLine} ${styles.thinking}`} role="status">
+            <span>{s.thinking}</span>
+            <span className={styles.typingDots} aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </div>
+        )}
         {speech.interimTranscript && (
           <p className={styles.interimLine}>{speech.interimTranscript}</p>
         )}

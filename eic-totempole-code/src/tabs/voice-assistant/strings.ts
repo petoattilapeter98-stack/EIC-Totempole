@@ -24,6 +24,8 @@ export interface VoiceAssistantStrings {
   readonly micUnavailable: string;
   /** A recognized utterance failed to reach the assistant (Direct Line activity post failed). */
   readonly sendError: string;
+  /** Shown in the transcript from the moment a question is sent until the assistant's reply arrives. */
+  readonly thinking: string;
 }
 
 export const voiceAssistantStrings = {
@@ -43,6 +45,7 @@ export const voiceAssistantStrings = {
     micNoPermission: 'Microphone access is needed to talk to the assistant. Please allow it and try again.',
     micUnavailable: 'Speech recognition is temporarily unavailable. Please try again.',
     sendError: "That didn't reach the assistant. Please try asking again.",
+    thinking: 'The assistant is thinking…',
   },
   hu: {
     subheading:
@@ -61,6 +64,7 @@ export const voiceAssistantStrings = {
       'A mikrofon engedélyezése szükséges az asszisztenssel való beszélgetéshez. Engedélyezze, majd próbálja újra.',
     micUnavailable: 'A beszédfelismerés átmenetileg nem érhető el. Kérjük, próbálja újra.',
     sendError: 'Ez nem jutott el az asszisztenshez. Kérjük, kérdezzen újra.',
+    thinking: 'Az asszisztens gondolkodik…',
   },
 } satisfies Record<Locale, VoiceAssistantStrings>;
 

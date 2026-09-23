@@ -118,6 +118,71 @@ describe('VoiceConversation', () => {
     );
   });
 
+  it('shows a thinking indicator once a question is sent, and clears it once the reply arrives', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    const activityHandler: { current: ((activity: DirectLineActivity) => void) | null } = {
+      current: null,
+    };
+    subscribeToDirectLineActivities.mockImplementation(
+      (_streamUrl: string, handler: (a: DirectLineActivity) => void) => {
+        activityHandler.current = handler;
+        return () => {};
+      },
+    );
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+
+    expect(screen.queryByText(voiceAssistantStrings.en.thinking)).not.toBeInTheDocument();
+
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('what is the innovation centre'));
+    });
+    fireEvent.pointerUp(talkButton);
+
+    expect(await screen.findByText(voiceAssistantStrings.en.thinking)).toBeInTheDocument();
+
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'bot' },
+        text: 'The Innovation Centre hosts several programmes.',
+      });
+    });
+
+    expect(
+      await screen.findByText('The Innovation Centre hosts several programmes.'),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(voiceAssistantStrings.en.thinking)).not.toBeInTheDocument();
+  });
+
+  it('clears the thinking indicator (and shows the send error) when posting the message fails', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    subscribeToDirectLineActivities.mockReturnValue(() => {});
+    postDirectLineMessage.mockReset().mockRejectedValue(new Error('network'));
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('what is the innovation centre'));
+    });
+    fireEvent.pointerUp(talkButton);
+
+    expect(await screen.findByText(voiceAssistantStrings.en.sendError)).toBeInTheDocument();
+    expect(screen.queryByText(voiceAssistantStrings.en.thinking)).not.toBeInTheDocument();
+  });
+
   it("does not render Direct Line's echo of the visitor's own posted message as an assistant line", async () => {
     stubSpeechRecognition();
     startDirectLineConversation.mockResolvedValue(CONVERSATION);
