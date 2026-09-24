@@ -41,6 +41,9 @@ Open the printed local URL **in Google Chrome**. The kiosk shell loads with Boar
 10. **Expect (browser mismatch)**: if this is opened in a non-Chrome browser (or `SpeechRecognition` is otherwise unavailable), step 2 instead shows a clear "this browser can't provide speech recognition" message rather than a silently non-functional talk button (spec Edge Cases, FR-010).
 11. **Expect (mic permission denied)**: if the visitor/operator denies the microphone permission prompt, the panel shows a clear "microphone access is needed" message rather than sitting silently as if listening (spec Edge Cases, FR-010).
 12. **Expect (nothing said)**: releasing the talk button having said nothing (or too quietly to pick up) sends nothing — the button simply returns to "Hold to Talk" (spec Edge Cases, 2026-09-23).
+13. **Expect (pause mid-hold, 2026-09-24)**: hold the talk button, say "What is the Innovation…", pause about 2 seconds while still holding, finish with "…Centre?", then release. The live text keeps showing the first half during the pause. After release, **exactly one** visitor line with the full question appears and one reply comes back, not two (FR-027). The devtools Network/WS tab should show a single outgoing message activity.
+14. **Expect (auto-scroll, 2026-09-24)**: once there are enough exchanges to overflow the transcript panel, each new question, the thinking indicator, and each reply appear in view without touching the panel. The page itself still does not scroll (FR-028, FR-006).
+15. **Expect (TEKsystems, 2026-09-24)**: ask "How does TEKsystems differentiate itself from its competitors?". The visitor line shows "TEKsystems" even if Chrome heard "tax systems" (FR-029). Repeat with the HU locale selected, and add any new mishearing you see to `transcriptCorrections.ts`.
 
 ## Scenario 3 — Starting the assistant / connection states (FR-001, FR-002, FR-023)
 

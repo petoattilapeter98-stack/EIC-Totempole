@@ -4,6 +4,8 @@
 
 **Updated 2026-09-23**: `VoiceConversation` gained three more pieces of local state for push-to-talk, the thinking indicator, and the Direct Line echo-dedup fix (research.md R16/R17) — see `TranscriptEntry`'s section below for `talking`/`awaitingReply`, and the new "Echo dedup tracking" entity.
 
+**Updated 2026-09-24**: a visitor entry's `text` is now the whole press's recognized question after correction (see `TranscriptEntry`), and two more non-state values were added: the per-press segment buffer inside `useSpeechRecognition`, and a transcript scroll ref (see "Per-press recognition buffer and transcript scroll" below).
+
 ## Note on spec entities vs. this codebase
 
 spec.md's Key Entities section (Voice Query, Assistant Response, Knowledge Domain, Conversation Session, Employee Profile) describes the *conceptual* shape of the assistant's behavior. Domain routing, answer generation, and the approved employee dataset are still realized entirely **inside** the Copilot Studio agent, which this codebase still treats as an opaque third party for *content* purposes — none of those entities' actual data (what the agent knows, how it routes) is stored or modeled here. What changed 2026-09-10: this codebase now owns the **transport** to that agent (Direct Line) and the **recognition** of what the visitor said (Chrome's SpeechRecognition), which it did not before — see DirectLineConversation and TranscriptEntry below.
@@ -52,6 +54,8 @@ The on-screen record of the current conversation (spec FR-005: text-only replies
 
 **Rendering (2026-09-23)**: an `assistant`-speaker entry's `text` is passed through `renderMarkdown()` (`markdown.tsx`) rather than shown as raw text, per FR-026 — see research.md R15. A `visitor`-speaker entry is always the raw recognized transcript, never markdown-rendered (there is nothing to render; it is the visitor's own words).
 
+**Visitor text (2026-09-24)**: there is one `visitor` entry per talk-button press, holding everything recognized during that press (FR-027), after `correctTranscript()` (FR-029). For example, "tax systems" is stored and shown as "TEKsystems". The same corrected string is what is posted and queued in `pendingSentTexts`.
+
 ### Push-to-talk / thinking-indicator local state (2026-09-23, new)
 
 Two more `useState` fields in `VoiceConversation`, alongside `status`/`transcript`/`sendError` above:
@@ -73,6 +77,13 @@ Two `useRef` values in `VoiceConversation`, not React state (neither should trig
 | `knownSelfIds` | `Set<string>` | Direct Line `from.id` values confirmed (by a prior text match) to be this app's own echoed activity, not the bot. Once an id is learned, later activities from it are dropped without needing another text match. |
 
 Both are reset (`[]` / `new Set()`) on every fresh connection attempt, same as the state fields above — a new conversation gets a new, unlearned set of self-ids, since Direct Line assigns a fresh session GUID each time (research.md R16).
+
+### Per-press recognition buffer and transcript scroll (2026-09-24, new)
+
+| Value | Where | Notes |
+|---|---|---|
+| `finalSegments` | `string[]`, local to `useSpeechRecognition`'s recognition effect | Final segments recognized during one activation (one press). Joined and flushed once on the stopped instance's `onend`, or by a 2 s fallback timer. Scoped to that effect run, so it is bounded by one press and discarded with it (Constitution V). See research.md R18. |
+| `transcriptRef` | `useRef<HTMLDivElement>` in `VoiceConversation` | The transcript panel element. Its `scrollTop` is set to `scrollHeight` whenever entries, `awaitingReply`, or live text change (FR-028, research.md R19). A ref, not state, so it causes no re-render. |
 
 ### ExamplePrompt
 
