@@ -13,6 +13,7 @@ import {
 } from './directLineClient';
 import { useSpeechRecognition } from './useSpeechRecognition';
 import { renderMarkdown } from './markdown';
+import { correctTranscript } from './transcriptCorrections';
 import styles from './VoiceConversation.module.css';
 
 export interface VoiceConversationProps {
@@ -56,6 +57,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   const [awaitingReply, setAwaitingReply] = useState(false);
 
   const conversationRef = useRef<DirectLineConversation | null>(null);
+  const transcriptRef = useRef<HTMLDivElement | null>(null);
   const resetRef = useRef(reset);
   const nextEntryId = useRef(0);
   /**
@@ -148,7 +150,10 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
   const speech = useSpeechRecognition({
     lang: LOCALE_TAGS[locale],
     active: status === 'ready' && talking,
-    onFinalTranscript: (text) => {
+    onFinalTranscript: (recognized) => {
+      // Corrected before display, posting, and echo tracking alike, so the
+      // echo-dedup text match (research.md R16) still sees identical text.
+      const text = correctTranscript(recognized);
       if (!text || !conversationRef.current) {
         return;
       }
@@ -162,6 +167,15 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
       });
     },
   });
+
+  // Keep the newest part of the conversation in view (spec FR-028): the
+  // transcript panel scrolls internally, the page itself never does.
+  useEffect(() => {
+    const el = transcriptRef.current;
+    if (el) {
+      el.scrollTop = el.scrollHeight;
+    }
+  }, [transcript, awaitingReply, speech.interimTranscript, status]);
 
   const handleRetry = () => setReloadKey((key) => key + 1);
 
@@ -219,7 +233,7 @@ export function VoiceConversation({ locale, reset }: VoiceConversationProps) {
         <span>{talking ? s.listening : s.holdToTalk}</span>
       </button>
 
-      <div className={styles.transcript} aria-live="polite">
+      <div ref={transcriptRef} className={styles.transcript} aria-live="polite">
         {transcript.length === 0 && !speech.interimTranscript && (
           <p className={styles.transcriptEmpty}>{s.subheading}</p>
         )}

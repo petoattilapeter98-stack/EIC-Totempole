@@ -91,7 +91,7 @@ describe('useSpeechRecognition', () => {
     await waitFor(() => expect(result.current.listening).toBe(true));
   });
 
-  it('calls onFinalTranscript for final results and exposes interim text for non-final ones', async () => {
+  it('buffers final results during the activation and shows them, plus interim text, as live feedback', async () => {
     const onFinalTranscript = vi.fn();
     const { result } = renderHook(() =>
       useSpeechRecognition({ lang: 'en-US', active: true, onFinalTranscript }),
@@ -104,18 +104,23 @@ describe('useSpeechRecognition', () => {
         results: makeResultList([{ transcript: 'what is the innovation', isFinal: false }]),
       } as SpeechRecognitionEvent);
     });
-
     await waitFor(() => expect(result.current.interimTranscript).toBe('what is the innovation'));
-    expect(onFinalTranscript).not.toHaveBeenCalled();
 
     act(() => {
       lastInstance?.onresult?.({
         resultIndex: 0,
-        results: makeResultList([{ transcript: 'what is the innovation centre', isFinal: true }]),
+        results: makeResultList([
+          { transcript: 'what is the innovation centre', isFinal: true },
+          { transcript: ' and who', isFinal: false },
+        ]),
       } as SpeechRecognitionEvent);
     });
 
-    expect(onFinalTranscript).toHaveBeenCalledWith('what is the innovation centre');
+    await waitFor(() =>
+      expect(result.current.interimTranscript).toBe('what is the innovation centre and who'),
+    );
+    // Nothing is sent while the button is still held.
+    expect(onFinalTranscript).not.toHaveBeenCalled();
   });
 
   it('restarts automatically on end while still active (Chrome stops "continuous" mode after a pause)', async () => {
@@ -149,11 +154,59 @@ describe('useSpeechRecognition', () => {
     expect(instance?.stopped).toBe(true);
     expect(instance?.aborted).toBe(false);
     const startsAtCleanup = instance?.startCount ?? 0;
-    instance?.onend?.();
+    act(() => {
+      instance?.onend?.();
+    });
     expect(instance?.startCount).toBe(startsAtCleanup);
   });
 
-  it('still delivers a final result that arrives after cleanup (the trailing result stop() produces)', async () => {
+  it('sends every final segment of one activation as a single joined utterance, after the stopped session ends', async () => {
+    const onFinalTranscript = vi.fn();
+    const { rerender } = renderHook(
+      ({ active }: { active: boolean }) =>
+        useSpeechRecognition({ lang: 'en-US', active, onFinalTranscript }),
+      { initialProps: { active: true } },
+    );
+    await waitFor(() => expect(lastInstance).not.toBeNull());
+    const instance = lastInstance;
+
+    act(() => {
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: makeResultList([{ transcript: 'what is the', isFinal: true }]),
+      } as SpeechRecognitionEvent);
+      // A pause: Chrome ends the session and the hook restarts it mid-hold.
+      instance?.onend?.();
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: makeResultList([{ transcript: ' innovation', isFinal: true }]),
+      } as SpeechRecognitionEvent);
+    });
+    expect(onFinalTranscript).not.toHaveBeenCalled();
+
+    rerender({ active: false });
+    expect(instance?.stopped).toBe(true);
+
+    // The trailing final result stop() triggers arrives asynchronously,
+    // after cleanup has already run -- it must still be included.
+    act(() => {
+      instance?.onresult?.({
+        resultIndex: 0,
+        results: makeResultList([{ transcript: 'centre', isFinal: true }]),
+      } as SpeechRecognitionEvent);
+    });
+    expect(onFinalTranscript).not.toHaveBeenCalled();
+
+    act(() => {
+      instance?.onend?.();
+      instance?.onend?.();
+    });
+
+    expect(onFinalTranscript).toHaveBeenCalledTimes(1);
+    expect(onFinalTranscript).toHaveBeenCalledWith('what is the innovation centre');
+  });
+
+  it('sends nothing when an activation ends without any final result', async () => {
     const onFinalTranscript = vi.fn();
     const { rerender } = renderHook(
       ({ active }: { active: boolean }) =>
@@ -164,18 +217,47 @@ describe('useSpeechRecognition', () => {
     const instance = lastInstance;
 
     rerender({ active: false });
-    expect(instance?.stopped).toBe(true);
+    act(() => {
+      instance?.onend?.();
+    });
 
-    // The trailing final result stop() triggers arrives asynchronously,
-    // after cleanup has already run -- it must still reach the caller.
+    expect(onFinalTranscript).not.toHaveBeenCalled();
+  });
+
+  it('flushes once after a fallback delay if the stopped session never fires onend', async () => {
+    const onFinalTranscript = vi.fn();
+    const { rerender } = renderHook(
+      ({ active }: { active: boolean }) =>
+        useSpeechRecognition({ lang: 'en-US', active, onFinalTranscript }),
+      { initialProps: { active: true } },
+    );
+    await waitFor(() => expect(lastInstance).not.toBeNull());
+    const instance = lastInstance;
+
     act(() => {
       instance?.onresult?.({
         resultIndex: 0,
-        results: makeResultList([{ transcript: 'trailing words', isFinal: true }]),
+        results: makeResultList([{ transcript: 'hello', isFinal: true }]),
       } as SpeechRecognitionEvent);
     });
 
-    expect(onFinalTranscript).toHaveBeenCalledWith('trailing words');
+    vi.useFakeTimers();
+    try {
+      rerender({ active: false });
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(onFinalTranscript).toHaveBeenCalledTimes(1);
+      expect(onFinalTranscript).toHaveBeenCalledWith('hello');
+
+      // A late onend after the fallback already flushed must not send again.
+      act(() => {
+        instance?.onend?.();
+      });
+      expect(onFinalTranscript).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('maps a permission-denied error distinctly from a generic failure', async () => {

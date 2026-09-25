@@ -7,7 +7,11 @@ export interface UseSpeechRecognitionOptions {
   readonly lang: string;
   /** Recognition only runs while this is true (mount/tap-gated, Constitution I -- no ambient mic capture). */
   readonly active: boolean;
-  /** Called once per recognized utterance the browser considers final. */
+  /**
+   * Called at most once per activation (one push-to-talk press), after
+   * `active` goes false, with every final segment recognized during that
+   * activation joined into one string. Not called if nothing was recognized.
+   */
   readonly onFinalTranscript: (text: string) => void;
 }
 
@@ -20,6 +24,9 @@ export interface UseSpeechRecognitionResult {
   readonly supported: boolean;
   readonly error: SpeechRecognitionErrorKind | null;
 }
+
+/** How long to wait for the stopped recognizer's `onend` before flushing anyway. */
+const FLUSH_FALLBACK_MS = 2000;
 
 function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null {
   if (typeof window === 'undefined') {
@@ -43,6 +50,11 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
  * `stop()` rather than `abort()`, so Chrome finishes processing whatever was
  * already captured and still fires a final result for it -- `abort()` would
  * silently drop the last few words spoken right before release.
+ *
+ * Chrome finalizes a result at every pause, so final results are buffered
+ * for the whole activation and handed to `onFinalTranscript` once, joined,
+ * when the stopped recognizer ends -- one press sends one question, no
+ * matter how many times the visitor paused while holding the button.
  */
 export function useSpeechRecognition({
   lang,
@@ -67,6 +79,29 @@ export function useSpeechRecognition({
     }
 
     let stoppedByCleanup = false;
+    // Everything Chrome finalizes during this one activation (one press of
+    // the talk button). Chrome finalizes a segment at every pause even in
+    // continuous mode, so these are buffered and sent as a single utterance
+    // once the activation ends, instead of one message per pause.
+    const finalSegments: string[] = [];
+    let flushed = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const joinSegments = (...extra: string[]) =>
+      [...finalSegments, ...extra].join(' ').replace(/\s+/g, ' ').trim();
+
+    const flush = () => {
+      clearTimeout(fallbackTimer);
+      if (flushed) {
+        return;
+      }
+      flushed = true;
+      const text = joinSegments();
+      if (text) {
+        onFinalTranscriptRef.current(text);
+      }
+    };
+
     const recognition = new Constructor();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -89,18 +124,18 @@ export function useSpeechRecognition({
           continue;
         }
         if (result.isFinal) {
-          onFinalTranscriptRef.current(alternative.transcript.trim());
+          finalSegments.push(alternative.transcript.trim());
         } else {
           interim += alternative.transcript;
         }
       }
-      // Final results (above) are always delivered, including the trailing
-      // one stop() produces after release -- but the interim display itself
-      // is skipped once cleanup has already cleared it, so a late partial
+      // Final results (above) are always buffered, including the trailing
+      // one stop() produces after release -- but the live display itself is
+      // skipped once cleanup has already cleared it, so a late partial
       // result from the outgoing instance can't flash stale text over a
       // newly started press.
       if (!stoppedByCleanup) {
-        setInterimTranscript(interim);
+        setInterimTranscript(joinSegments(interim));
       }
     };
 
@@ -113,13 +148,17 @@ export function useSpeechRecognition({
     };
 
     recognition.onend = () => {
-      setListening(false);
-      setInterimTranscript('');
-      // Chrome ends a "continuous" session after a pause; restart it unless
-      // this is a real teardown (active became false, or unmount).
-      if (!stoppedByCleanup) {
-        recognition.start();
+      if (stoppedByCleanup) {
+        // The session stop() ended has now delivered everything it had
+        // captured -- send the whole press as one utterance.
+        flush();
+        return;
       }
+      // Chrome ends a "continuous" session after a pause; restart it while
+      // the button is still held, keeping what was said so far on screen.
+      setListening(false);
+      setInterimTranscript(joinSegments());
+      recognition.start();
     };
 
     recognition.start();
@@ -128,12 +167,14 @@ export function useSpeechRecognition({
       stoppedByCleanup = true;
       recognition.onstart = null;
       recognition.onerror = null;
-      recognition.onend = null;
-      // `onresult` deliberately stays attached: stop() (unlike abort())
-      // keeps processing whatever audio it already captured and still fires
-      // a final result for it a moment later, which is exactly the tail end
-      // of what the visitor just said as they released the button.
+      // `onresult` and `onend` deliberately stay attached: stop() (unlike
+      // abort()) keeps processing whatever audio it already captured, fires
+      // a final result for it -- the tail end of what the visitor said as
+      // they released the button -- and then fires `onend`, which flushes.
       recognition.stop();
+      // Safety net in case this instance never fires `onend` (e.g. it had
+      // already failed); flush() clears this timer and is idempotent.
+      fallbackTimer = setTimeout(flush, FLUSH_FALLBACK_MS);
       setListening(false);
       setInterimTranscript('');
     };

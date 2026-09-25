@@ -33,7 +33,11 @@ class FakeSpeechRecognition extends EventTarget implements SpeechRecognition {
   start() {
     this.onstart?.();
   }
-  stop() {}
+  // Like Chrome: stop() ends the session asynchronously, firing onend once
+  // already-captured audio has been processed.
+  stop() {
+    queueMicrotask(() => this.onend?.());
+  }
   abort() {}
 }
 
@@ -245,6 +249,95 @@ describe('VoiceConversation', () => {
     expect(
       await screen.findByText('The Innovation Centre hosts several programmes.'),
     ).toBeInTheDocument();
+  });
+
+  it('sends one message per press, even when the visitor pauses mid-hold', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    subscribeToDirectLineActivities.mockReturnValue(() => {});
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+
+    // Chrome finalizes a segment at the pause, then ends and is restarted
+    // while the button is still held -- none of that may send anything.
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('what is the'));
+      lastRecognition?.onend?.();
+    });
+    expect(postDirectLineMessage).not.toHaveBeenCalled();
+
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('innovation centre'));
+    });
+    expect(postDirectLineMessage).not.toHaveBeenCalled();
+
+    fireEvent.pointerUp(talkButton);
+
+    expect(await screen.findByText('what is the innovation centre')).toBeInTheDocument();
+    expect(postDirectLineMessage).toHaveBeenCalledTimes(1);
+    expect(postDirectLineMessage).toHaveBeenCalledWith(
+      CONVERSATION,
+      'what is the innovation centre',
+      'en-GB',
+    );
+  });
+
+  it('corrects a misheard "TEKsystems" before showing and sending the question', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    subscribeToDirectLineActivities.mockReturnValue(() => {});
+
+    render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    const talkButton = await screen.findByRole('button', {
+      name: voiceAssistantStrings.en.holdToTalk,
+    });
+    fireEvent.pointerDown(talkButton);
+    await waitFor(() => expect(lastRecognition).not.toBeNull());
+
+    act(() => {
+      lastRecognition?.onresult?.(finalResult('what does tax systems do'));
+    });
+    fireEvent.pointerUp(talkButton);
+
+    expect(await screen.findByText('what does TEKsystems do')).toBeInTheDocument();
+    expect(postDirectLineMessage).toHaveBeenCalledWith(CONVERSATION, 'what does TEKsystems do', 'en-GB');
+  });
+
+  it('scrolls the transcript to the newest content when a reply arrives', async () => {
+    stubSpeechRecognition();
+    startDirectLineConversation.mockResolvedValue(CONVERSATION);
+    const activityHandler: { current: ((activity: DirectLineActivity) => void) | null } = {
+      current: null,
+    };
+    subscribeToDirectLineActivities.mockImplementation(
+      (_streamUrl: string, handler: (a: DirectLineActivity) => void) => {
+        activityHandler.current = handler;
+        return () => {};
+      },
+    );
+
+    const { container } = render(<VoiceConversation locale="en" reset={vi.fn()} />);
+    await screen.findByRole('button', { name: voiceAssistantStrings.en.holdToTalk });
+    const transcriptPanel = container.querySelector<HTMLElement>('[aria-live="polite"]')!;
+    // jsdom does no layout, so give the panel a content height to scroll to.
+    Object.defineProperty(transcriptPanel, 'scrollHeight', { configurable: true, value: 900 });
+    transcriptPanel.scrollTop = 0;
+
+    act(() => {
+      activityHandler.current?.({
+        type: 'message',
+        from: { id: 'bot' },
+        text: 'The Innovation Centre hosts several programmes.',
+      });
+    });
+
+    await screen.findByText('The Innovation Centre hosts several programmes.');
+    expect(transcriptPanel.scrollTop).toBe(900);
   });
 
   it('stops capturing audio when the talk button is released, and resumes on the next press', async () => {
