@@ -4,6 +4,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../app/App';
 import { KioskProvider } from '../../context/KioskContext';
+import {
+  COLLAPSE_HERO_ATTRACT_EXEMPT,
+  COLLAPSE_HERO_ATTRIBUTE,
+} from '../../components/HeroBanner/collapseHero';
 import { TABS } from '../registry';
 import TicTacToe from './TicTacToe';
 
@@ -85,21 +89,44 @@ describe('TicTacToe — opening and closing the game (V2, V3, V5, E7)', () => {
   });
 });
 
-describe('TicTacToe — attract exemption attribute (V6)', () => {
-  it('carries no data-attract-exempt in the default view', () => {
+describe('TicTacToe — collapsed-banner request (V6, amended 2026-10-26)', () => {
+  const request = () => document.querySelector(`[${COLLAPSE_HERO_ATTRIBUTE}]`);
+
+  it('asks for nothing in the default view', () => {
     renderTab();
-    expect(document.querySelector('[data-attract-exempt]')).toBeNull();
+    expect(request()).toBeNull();
   });
 
-  it('carries data-attract-exempt only while the game view is open', async () => {
+  it('asks the shell to collapse the banner, attract-exempt, only while the game view is open', async () => {
     const user = userEvent.setup();
     renderTab();
 
     await user.click(screen.getByRole('button', { name: 'Play' }));
-    expect(document.querySelector('[data-attract-exempt]')).not.toBeNull();
+    expect(request()).toHaveAttribute(COLLAPSE_HERO_ATTRIBUTE, COLLAPSE_HERO_ATTRACT_EXEMPT);
+    // On the element that holds the board, so the request cannot outlive it.
+    expect(request()).toContainElement(screen.getByRole('group', { name: 'Game board' }));
 
     await user.click(screen.getByRole('button', { name: 'Close game' }));
-    expect(document.querySelector('[data-attract-exempt]')).toBeNull();
+    expect(request()).toBeNull();
+  });
+
+  it('no longer opens a full-viewport overlay', async () => {
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(screen.getByRole('button', { name: 'Play' }));
+    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+  });
+
+  it('puts Close game after New game, in the side panel', async () => {
+    const user = userEvent.setup();
+    renderTab();
+
+    await user.click(screen.getByRole('button', { name: 'Play' }));
+    const newGame = screen.getByRole('button', { name: 'New game' });
+    const close = screen.getByRole('button', { name: 'Close game' });
+    expect(newGame.parentElement).toBe(close.parentElement);
+    expect(newGame.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
@@ -200,7 +227,8 @@ describe('TicTacToe — idle reset (US3, FR-018, FR-019)', () => {
     });
 
     expect(screen.getByRole('tab', { name: /Board Agenda/ })).toHaveAttribute('aria-selected', 'true');
-    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+    expect(screen.queryByRole('group', { name: 'Game board' })).toBeNull();
+    expect(document.querySelector(`[${COLLAPSE_HERO_ATTRIBUTE}]`)).toBeNull();
 
     // The next Play gets a fresh board — no visitor inherits another's game.
     fireEvent.click(screen.getByRole('tab', { name: /Tic-Tac-Toe/ }));

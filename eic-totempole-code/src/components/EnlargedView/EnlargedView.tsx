@@ -25,11 +25,13 @@ export interface EnlargedViewProps {
  * Shared full-viewport capability.
  * specs/004-tic-tac-toe/contracts/enlarged-view.md
  *
- * Two callers today: the restaurant map's expanded state and the Tic-Tac-Toe
- * game view. Both need a full-viewport panel with a persistent return control
- * in the same place, and both need the shell to raise them above the footer
- * and (optionally) hold them at full opacity through attract mode. Neither of
- * those is achievable from inside a tab module — see research R1, R2 in
+ * One caller today: the restaurant map's expanded state. The Tic-Tac-Toe game
+ * view used it until 2026-10-26, when it moved into the content region with
+ * the Welcome banner collapsed instead (src/components/HeroBanner/
+ * collapseHero.ts); `attractExempt` has had no caller since. A full-viewport
+ * panel needs the shell to raise it above the footer and (optionally) hold it
+ * at full opacity through attract mode. Neither is achievable from inside a
+ * tab module — see research R1, R2 in
  * specs/004-tic-tac-toe/research.md — so this component renders the data
  * attributes the shell's two `:has()` rules key on (§3 of the contract).
  *

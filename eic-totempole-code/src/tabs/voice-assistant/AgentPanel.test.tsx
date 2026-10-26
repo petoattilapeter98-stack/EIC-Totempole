@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import { KioskProvider } from '../../context/KioskContext';
+import { COLLAPSE_HERO_ATTRIBUTE } from '../../components/HeroBanner/collapseHero';
 import { LanguageToggle } from '../../components/LanguageToggle/LanguageToggle';
 import { examplePrompts } from './examplePrompts';
 import { meta } from './meta';
@@ -71,6 +72,22 @@ describe('AgentPanel', () => {
     for (const prompt of examplePrompts) {
       expect(screen.getByText(prompt.text.en)).toBeInTheDocument();
     }
+  });
+
+  it('asks the shell to collapse the Welcome banner only while a conversation is open (2026-10-26 amendment)', async () => {
+    const user = userEvent.setup();
+    const { container } = renderPanel();
+    const collapseRequest = () => container.querySelector(`[${COLLAPSE_HERO_ATTRIBUTE}]`);
+
+    expect(collapseRequest()).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.startButton }));
+    // On the element that also holds the conversation, so the request cannot
+    // outlive it.
+    expect(collapseRequest()).toContainElement(screen.getByTestId('voice-conversation-stub'));
+
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.endButton }));
+    expect(collapseRequest()).toBeNull();
   });
 
   it('renders in Hungarian when the shell locale is switched (FR-015)', async () => {

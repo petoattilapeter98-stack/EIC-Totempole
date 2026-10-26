@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { KioskProvider } from '../../context/KioskContext';
 import { App } from '../../app/App';
+import { strings } from '../../i18n/strings';
 import { meta } from './meta';
 import { voiceAssistantStrings } from './strings';
 
@@ -34,6 +35,32 @@ function expectNoOverflow(label: string) {
   expect(el.scrollWidth, `${label}: horizontal overflow`).toBeLessThanOrEqual(el.clientWidth);
 }
 
+/** The banner's collapse and return animate over 0.5s. */
+const COLLAPSE_POLL = { timeout: 3000, interval: 50 };
+
+/**
+ * Geometry of the shell rows around the Welcome banner. The banner keeps its
+ * natural height while collapsed (its wrapper clips it), so "collapsed" is
+ * measured as the distance from header to nav, not the banner's own rect.
+ */
+function shellGeometry() {
+  const header = document.querySelector('header')!;
+  const shell = header.closest<HTMLElement>('[data-attract]')!;
+  // getByText, unlike getByRole, still finds the banner once it is hidden.
+  const hero = screen.getByText(strings.en.eventPill).closest('section')!;
+  const nav = screen.getByRole('tablist');
+  return {
+    navOffset: nav.getBoundingClientRect().top - header.getBoundingClientRect().bottom,
+    panelHeight: screen.getByRole('tabpanel').getBoundingClientRect().height,
+    // Layout height, not the rect: the rect includes attract mode's 1.03 scale,
+    // which is still easing out just after the first tap.
+    heroHeight: hero.offsetHeight,
+    heroVisibility: getComputedStyle(hero).visibility,
+    shellGap: parseFloat(getComputedStyle(shell).rowGap),
+    isAttract: shell.dataset.attract === 'true',
+  };
+}
+
 describe('Voice Assistant tab layout at 1920x1280', () => {
   it('does not scroll in the idle state (FR-006)', async () => {
     const user = userEvent.setup();
@@ -62,6 +89,73 @@ describe('Voice Assistant tab layout at 1920x1280', () => {
       await screen.findByRole('button', { name: voiceAssistantStrings.en.endButton }),
     ).toBeInTheDocument();
     expectNoOverflow('voice-assistant active');
+  });
+
+  it('collapses the Welcome banner while a conversation is open and gives its height to the transcript (2026-10-26 amendment)', async () => {
+    const user = userEvent.setup();
+    render(
+      <KioskProvider>
+        <App />
+      </KioskProvider>,
+    );
+
+    await user.click(screen.getByRole('tab', { name: new RegExp(meta.label.en) }));
+    const before = shellGeometry();
+    expect(before.navOffset, 'banner sits between header and nav').toBeGreaterThan(
+      before.heroHeight,
+    );
+
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.startButton }));
+
+    // Exactly ONE shell gap left between header and nav - not the two that an
+    // emptied grid row would leave behind.
+    await expect
+      .poll(() => shellGeometry().navOffset, COLLAPSE_POLL)
+      .toBeLessThanOrEqual(before.shellGap + 1);
+    await expect.poll(() => shellGeometry().heroVisibility, COLLAPSE_POLL).toBe('hidden');
+
+    const collapsed = shellGeometry();
+    expect(collapsed.navOffset).toBeGreaterThanOrEqual(before.shellGap - 1);
+    expect(
+      collapsed.panelHeight - before.panelHeight,
+      'content region gains the banner height plus one gap',
+    ).toBeGreaterThanOrEqual(before.heroHeight + before.shellGap - 1);
+    expectNoOverflow('banner collapsed');
+
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.endButton }));
+
+    await expect
+      .poll(() => Math.abs(shellGeometry().navOffset - before.navOffset), COLLAPSE_POLL)
+      .toBeLessThanOrEqual(1);
+    await expect.poll(() => shellGeometry().heroVisibility, COLLAPSE_POLL).toBe('visible');
+    expect(Math.abs(shellGeometry().panelHeight - before.panelHeight)).toBeLessThanOrEqual(1);
+    expectNoOverflow('banner restored after End');
+  });
+
+  it('brings the Welcome banner back in attract mode even with a conversation open', async () => {
+    const user = userEvent.setup();
+    render(
+      // Shortened so the test reaches attract mode in seconds, not 60s.
+      <KioskProvider attractAfterSeconds={2}>
+        <App />
+      </KioskProvider>,
+    );
+
+    await user.click(screen.getByRole('tab', { name: new RegExp(meta.label.en) }));
+    const open = shellGeometry();
+    await user.click(screen.getByRole('button', { name: voiceAssistantStrings.en.startButton }));
+
+    await expect.poll(() => shellGeometry().isAttract, { timeout: 8000 }).toBe(true);
+    // Attract transitions run at 1.4s.
+    await expect
+      .poll(() => Math.abs(shellGeometry().navOffset - open.navOffset), { timeout: 5000 })
+      .toBeLessThanOrEqual(1);
+    expect(shellGeometry().heroVisibility).toBe('visible');
+
+    // The conversation is still there underneath - attract only overrides the
+    // banner; ending the conversation is the idle reset's job.
+    expect(screen.getByRole('button', { name: voiceAssistantStrings.en.endButton })).toBeInTheDocument();
+    expectNoOverflow('attract with a conversation open');
   });
 
   it('gives the Start and End controls at least a 64px touch target (Constitution III)', async () => {

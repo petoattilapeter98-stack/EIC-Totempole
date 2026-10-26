@@ -32,6 +32,17 @@ they look at it. The game's normal tab view, like every other destination, still
 
 ## Clarifications
 
+### Session 2026-10-26 (amendment: game view inside the page)
+
+- Q: How should the game view look? → A: **Like the Ask Assistant conversation: inside the content
+  region, with the Welcome banner collapsed**, not a full-screen overlay. User's words: "Could you
+  also do the same panel extension feature for the tictactoe panel? Currently it goes to full
+  screen, but it doesnt fit to the overall design." The return control moves into the side panel
+  under New game. See FR-003, FR-004, FR-007.
+- FR-020 (the 2026-09-14 answer below) is kept: the game view stays at full presence in attract
+  mode, and the banner stays collapsed. This differs on purpose from the Ask Assistant, whose banner
+  returns in attract mode (specs/003-voice-info-agent FR-030).
+
 ### Session 2026-09-14
 
 - Q: Where does the Play control live — on a new dedicated navigation destination, on the
@@ -200,21 +211,23 @@ again and confirm the board is empty with X to move.
 
 **The enlarged game view**
 
-- **FR-003**: The game view MUST fill the entire viewport and MUST cover the header, hero and
-  navigation bar, matching the restaurant map's expanded state (feature 003, FR-024) except in
-  attract mode (FR-020).
-- **FR-004**: The game view MUST show a persistent, always-visible return control that leaves the
-  game view and restores the normal layout. It MUST match the expanded map's return control in
-  placement, size and visual treatment, so a visitor who has used one
-  recognises the other (feature 003, FR-025).
+- **FR-003** **(amended 2026-10-26, was a full-viewport view covering the header, hero and
+  navigation bar)**: The game view MUST stay inside the content region, with the header, navigation
+  bar and footer in place, and MUST collapse the hero banner so the content region has the room
+  (specs/001-lobby-kiosk-shell FR-027). The board MUST be as large as the region allows without
+  scrolling.
+- **FR-004** **(amended 2026-10-26, was "MUST match the expanded map's return control")**: The game
+  view MUST show a persistent, always-visible return control that leaves the game view and restores
+  the normal layout. It sits in the side panel under New game and shares New game's visual
+  treatment, the same way the Ask Assistant's End control sits inside its panel.
 - **FR-005**: The game view MUST NOT be a trap: the return control is always visible and never
   fades or auto-hides, and the kiosk's idle reset also exits the view (FR-018), matching feature
   003 FR-026.
 - **FR-006**: The game view MUST be an inline state of the single page. It MUST NOT be a separate
   page or address, a dialog, a popup, or the browser's own fullscreen mode (Constitution
   Principle IV).
-- **FR-007**: When the game view opens, keyboard focus MUST move into it so a keyboard or
-  screen-reader user is not left behind the covered navigation; when it closes, focus MUST return
+- **FR-007**: When the game view opens, keyboard focus MUST move into it (to the return control,
+  since the Play control it replaced is gone); when it closes, focus MUST return
   to the Play control. Focus MUST NOT be trapped inside the view (matching feature 003).
 
 **Playing**
@@ -262,7 +275,9 @@ again and confirm the board is empty with X to move.
   for the idle reset, so an active game is not reset out from under its players (User Story 3,
   scenario 4).
 - **FR-020**: The enlarged game view MUST NOT dim, recede or otherwise change its appearance in
-  attract mode. It MUST stay at full presence for as long as it is open, so every tap on the board
+  attract mode. **Clarified 2026-10-26**: this includes the collapsed hero banner, which MUST stay
+  collapsed rather than return and shrink the board. Since 2026-10-26 attract mode and the idle
+  reset both start after 60 seconds, so the reset normally closes the game at the same moment. It MUST stay at full presence for as long as it is open, so every tap on the board
   is an ordinary move. This is the one intended difference from the expanded map (feature 003,
   FR-035). The exemption MUST NOT affect attract mode anywhere else: the Tic-Tac-Toe destination's
   normal view MUST dim like every other destination, and attract mode MUST work as usual once the

@@ -228,8 +228,8 @@ describe('Restaurant map layout at 1920x1280', () => {
     // Pins the pre-migration rect of the expanded map's return control, measured
     // on the unmodified code before src/components/EnlargedView/ existed. The
     // 004-tic-tac-toe EnlargedView migration (specs/004-tic-tac-toe/contracts/
-    // enlarged-view.md E5) must reproduce this rect so the game's return control
-    // — which shares the same component — matches what shipped in 003.
+    // enlarged-view.md E5) had to reproduce this rect. (The game stopped using
+    // EnlargedView on 2026-10-26; the rect still guards the map itself.)
     const user = userEvent.setup();
     await openMapTab(user);
     await user.click(screen.getByRole('button', { name: STRINGS.expandLabel.en }));
@@ -247,8 +247,7 @@ describe('Restaurant map layout at 1920x1280', () => {
     // Width is the one text-driven dimension (nowrap label + padding), so it
     // varies with the platform's glyph rasterisation: 229.52px measured on
     // Windows Chromium, 227px on the ubuntu-latest CI runner, same font files.
-    // Its tolerance absorbs that; the platform-independent map-vs-game
-    // placement check (top/right/height) lives in TicTacToe.browser.test.tsx.
+    // Its tolerance absorbs that.
     const closeTo = (actual: number, expected: number, tolerance: number) =>
       expect(Math.abs(actual - expected), `${actual} within ${tolerance}px of ${expected}`).toBeLessThanOrEqual(
         tolerance,

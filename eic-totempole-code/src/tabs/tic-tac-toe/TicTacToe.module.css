@@ -2,9 +2,11 @@
  * Tic-Tac-Toe layout.
  * specs/004-tic-tac-toe/contracts/view-states.md §1, §2
  *
- * Two views:
- *   .root   default — intro + Play, inside the content region
- *   .game   enlarged — the board + side panel, rendered via EnlargedView
+ * Two views, both inside the content region:
+ *   .root      default — intro + Play
+ *   .gameView  enlarged — the board + side panel, with the Welcome banner
+ *              collapsed so the region is taller (amended 2026-10-26; it
+ *              used to be a full-viewport EnlargedView overlay)
  *
  * The no-scroll guarantee (Constitution II) is structural: every flexible box
  * carries `min-height: 0` / `min-width: 0`.
@@ -71,16 +73,24 @@
  * Game view
  * specs/004-tic-tac-toe/contracts/view-states.md §2, §5
  *
- * Rendered as EnlargedView's child (contract L1). height:100% resolves
- * against the panel's content box, which has a definite height from
- * `inset: 0` on a `position: fixed` ancestor — see RestaurantMap.module.css
- * for the same reasoning applied to .mapArea.
+ * The board's height:100% resolves against the content region's content box,
+ * whose height is definite (the shell's 1fr row). The board therefore grows
+ * with the region while the banner collapses, and is never taller than it.
  * ------------------------------------------------------------------------- */
+.gameView {
+  /* Full width: .root centres its children, which would otherwise shrink
+     this wrapper to its content. */
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
 /*
- * Centred as a unit in the panel, rather than the board hugging the left edge
+ * Centred as a unit in the region, rather than the board hugging the left edge
  * with the side panel stretched to fill the remaining width — board and side
  * panel are sized by their own content and the pair sits in the middle of
- * the screen.
+ * the region.
  */
 .game {
   display: flex;
@@ -171,7 +181,10 @@
   overflow-wrap: break-word;
 }
 
-.newGame {
+/* New game and Close game share one look: secondary actions under the
+   status line. */
+.newGame,
+.close {
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -191,7 +204,7 @@
   cursor: pointer;
 }
 
-.newGameIcon {
+.actionIcon {
   flex-shrink: 0;
   width: 1.5rem;
   height: 1.5rem;

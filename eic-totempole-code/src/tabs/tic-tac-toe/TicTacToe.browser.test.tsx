@@ -6,7 +6,6 @@ import { describe, expect, it } from 'vitest';
 import { App } from '../../app/App';
 import { KioskProvider } from '../../context/KioskContext';
 import { TABS } from '../registry';
-import { STRINGS as MAP_STRINGS } from '../restaurant-map/strings';
 import { STRINGS } from './strings';
 
 import '../../styles/tokens.css';
@@ -54,6 +53,19 @@ async function openGame(user: ReturnType<typeof userEvent.setup>, hungarian = fa
   await openTicTacToeTab(user, hungarian);
   const play = hungarian ? STRINGS.play.hu : STRINGS.play.en;
   await user.click(screen.getByRole('button', { name: play }));
+}
+
+/** The banner's collapse and return animate over 0.5s. */
+const COLLAPSE_POLL = { timeout: 3000, interval: 50 };
+
+/** Header-to-nav distance: about one shell gap while the banner is collapsed. */
+function navOffset() {
+  const header = document.querySelector('header')!;
+  return screen.getByRole('tablist').getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+}
+
+function shellGap() {
+  return parseFloat(getComputedStyle(document.querySelector('[data-attract]')!).rowGap);
 }
 
 function boardCells() {
@@ -261,25 +273,36 @@ describe('Tic-Tac-Toe layout — full nav (research R7)', () => {
   });
 });
 
-describe('Tic-Tac-Toe layout — EnlargedView behaviour', () => {
-  it('covers the footer while the game view is open', async () => {
+describe('Tic-Tac-Toe layout — game view in the content region (amended 2026-10-26)', () => {
+  it('keeps the header, nav and footer in place and collapses the banner while the game view is open', async () => {
     const user = userEvent.setup();
     await openGame(user);
 
-    const root = document.querySelector('[data-enlarged-view]');
-    expect(root).not.toBeNull();
-
-    const footer = document.querySelector('footer');
-    expect(footer).not.toBeNull();
-    const footerBox = footer!.getBoundingClientRect();
+    // No overlay any more: the footer is the topmost thing at its own centre.
+    const footer = document.querySelector('footer')!;
+    const footerBox = footer.getBoundingClientRect();
     const hit = document.elementFromPoint(
       footerBox.left + footerBox.width / 2,
       footerBox.top + footerBox.height / 2,
     );
-    expect(root!.contains(hit)).toBe(true);
+    expect(footer.contains(hit)).toBe(true);
+    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+
+    // Banner collapsed: one shell gap left between header and nav.
+    await expect.poll(navOffset, COLLAPSE_POLL).toBeLessThanOrEqual(shellGap() + 1);
+
+    // The board sits inside the content region, which now has the room.
+    const panel = screen.getByRole('tabpanel').getBoundingClientRect();
+    const board = screen.getByRole('group', { name: STRINGS.boardName.en }).getBoundingClientRect();
+    expect(board.top).toBeGreaterThanOrEqual(panel.top);
+    expect(board.bottom).toBeLessThanOrEqual(panel.bottom);
+    expectNoOverflow('game view');
+
+    await user.click(screen.getByRole('button', { name: STRINGS.close.en }));
+    await expect.poll(navOffset, COLLAPSE_POLL).toBeGreaterThan(shellGap() * 2 + 100);
   });
 
-  it('stays at full opacity in attract mode while enlarged, and dims in the default view (SC-011, FR-020)', async () => {
+  it('stays at full opacity, with the banner still collapsed, in attract mode while enlarged; dims in the default view (SC-011, FR-020)', async () => {
     const user = userEvent.setup();
     render(
       <KioskProvider attractAfterSeconds={1}>
@@ -291,13 +314,18 @@ describe('Tic-Tac-Toe layout — EnlargedView behaviour', () => {
     await user.click(screen.getByRole('button', { name: STRINGS.play.en }));
     await new Promise((resolve) => setTimeout(resolve, 3200));
 
+    expect(document.querySelector('[data-attract]')).toHaveAttribute('data-attract', 'true');
     const main = document.querySelector('main');
     expect(main).not.toBeNull();
     expect(getComputedStyle(main!).opacity).toBe('1');
+    // Nothing about the view changes: the banner does not come back and
+    // shrink the board while players think.
+    expect(navOffset()).toBeLessThanOrEqual(shellGap() + 1);
 
     await user.click(screen.getByRole('button', { name: STRINGS.close.en }));
     await new Promise((resolve) => setTimeout(resolve, 3200));
     expect(getComputedStyle(main!).opacity).toBe('0.16');
+    expect(navOffset()).toBeGreaterThan(shellGap() * 2 + 100);
   });
 
   it('a real keyboard Enter on a focused empty cell places a mark (N4)', async () => {
@@ -331,7 +359,7 @@ describe('Tic-Tac-Toe layout — EnlargedView behaviour', () => {
     // clear idleTimeoutSeconds AND that transition, not just the former.
     await new Promise((resolve) => setTimeout(resolve, 5200));
 
-    expect(document.querySelector('[data-enlarged-view]')).toBeNull();
+    expect(document.querySelector('[data-collapse-hero]')).toBeNull();
     expect(screen.getByRole('tab', { name: /Board Agenda/ })).toHaveAttribute('aria-selected', 'true');
 
     // Attract mode works as usual once the game view is gone: <main> is back
@@ -340,37 +368,5 @@ describe('Tic-Tac-Toe layout — EnlargedView behaviour', () => {
     const main = document.querySelector('main');
     expect(main).not.toBeNull();
     expect(getComputedStyle(main!).opacity).toBe('0.16');
-  });
-
-  it('the game and map return controls share the same placement and size (E5, FR-004)', async () => {
-    // Width is NOT compared: "Close game" and "Close enlarged map" are
-    // different lengths, so the buttons are legitimately different widths —
-    // FR-004 requires matching placement and touch-target SIZE (height), not
-    // identical pixel width for different label text. Top and right anchor
-    // to the same formula (EnlargedView.module.css .returnControl), so those
-    // must match exactly regardless of label length.
-    const user = userEvent.setup();
-    render(
-      <KioskProvider>
-        <App />
-      </KioskProvider>,
-    );
-
-    await user.click(screen.getByRole('tab', { name: new RegExp(STRINGS.heading.en) }));
-    await settle();
-    await user.click(screen.getByRole('button', { name: STRINGS.play.en }));
-    const gameClose = screen.getByRole('button', { name: STRINGS.close.en }).getBoundingClientRect();
-    await user.click(screen.getByRole('button', { name: STRINGS.close.en }));
-
-    await user.click(screen.getByRole('tab', { name: new RegExp(MAP_STRINGS.listHeading.en) }));
-    await settle();
-    await user.click(screen.getByRole('button', { name: MAP_STRINGS.expandLabel.en }));
-    const mapClose = screen
-      .getByRole('button', { name: MAP_STRINGS.collapseLabel.en })
-      .getBoundingClientRect();
-
-    expect(gameClose.top).toBeCloseTo(mapClose.top, 0);
-    expect(gameClose.right).toBeCloseTo(mapClose.right, 0);
-    expect(gameClose.height).toBeCloseTo(mapClose.height, 0);
   });
 });

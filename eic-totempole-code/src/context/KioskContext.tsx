@@ -15,10 +15,12 @@ import { DEFAULT_TAB_ID, type TabId } from '../tabs/registry';
 /**
  * Seconds of no interaction before the shell drifts into attract mode.
  *
- * Shorter than the auto-reset so the kiosk becomes eye-catching while a visitor
- * is still approaching, rather than only after it has given up on them.
+ * Raised from 30 to 60 on 2026-10-26: at 30 the screen dimmed while visitors
+ * were still reading. It now matches the idle auto-reset
+ * (IDLE_TIMEOUT_SECONDS), so the kiosk tidies up and turns ambient at the same
+ * moment.
  */
-export const ATTRACT_AFTER_SECONDS = 30;
+export const ATTRACT_AFTER_SECONDS = 60;
 
 export interface KioskState {
   readonly activeTab: TabId;
@@ -61,7 +63,7 @@ const KioskContext = createContext<KioskState | null>(null);
 interface KioskProviderProps {
   readonly children: ReactNode;
   readonly idleTimeoutSeconds?: number;
-  /** Overridable so tests can reach attract mode without waiting 30s. */
+  /** Overridable so tests can reach attract mode without waiting 60s. */
   readonly attractAfterSeconds?: number;
 }
 

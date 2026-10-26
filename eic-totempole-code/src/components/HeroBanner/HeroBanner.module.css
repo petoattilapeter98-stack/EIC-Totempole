@@ -93,31 +93,37 @@
   text-underline-offset: 0.25em;
 }
 
-/* Decorative geometric graphic (spec FR-010) */
-.graphic {
+/*
+ * TEKsystems logo (spec FR-010). It took the place of an abstract shapes
+ * graphic, and keeps that graphic's slow float - but without the old tilt,
+ * because a brand mark should never be shown rotated.
+ */
+.logo {
   flex-shrink: 0;
-  width: 21rem;
-  height: 17rem;
+  width: 34rem;
+  height: auto;
+  user-select: none;
+  -webkit-user-select: none;
   animation: float var(--motion-float) ease-in-out infinite;
 }
 
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0);
   }
   50% {
-    transform: translateY(-0.5rem) rotate(3deg);
+    transform: translateY(-0.5rem);
   }
 }
 
 /*
- * This graphic is purely decorative (aria-hidden), so under reduced motion it
+ * The logo is purely decorative (empty alt), so under reduced motion the float
  * is disabled outright — unlike the header's status pulse, which carries
  * meaning FR-001 requires to stay visible (research.md R11).
  */
 @media (prefers-reduced-motion: reduce) {
-  .graphic {
+  .logo {
     animation: none;
   }
 }

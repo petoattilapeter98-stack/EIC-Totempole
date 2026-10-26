@@ -14,8 +14,11 @@ import styles from './App.module.css';
  *
  * When nobody has touched the kiosk for a while it drifts into attract mode:
  * the chrome recedes, the hero grows, and an ambient wash fades in behind
- * everything. Any touch returns it immediately. Row sizing never changes, so
- * the no-scroll guarantee holds in both states.
+ * everything. Any touch returns it immediately.
+ *
+ * A feature can also collapse the hero to give its height to the content row
+ * (src/components/HeroBanner/collapseHero.ts). The content row stays the only
+ * flexible row either way, so the no-scroll guarantee holds in every state.
  */
 export function App() {
   const { isAttract } = useKiosk();
@@ -28,11 +31,15 @@ export function App() {
         <HeaderBar />
       </div>
 
+      {/* Two wrappers so the hero row can collapse smoothly - see
+          "Collapsed hero" in App.module.css. */}
       <div className={styles.hero}>
-        <HeroBanner />
+        <div className={styles.heroClip}>
+          <HeroBanner />
+        </div>
       </div>
 
-      <div className={styles.recede}>
+      <div className={`${styles.recede} ${styles.nav}`}>
         <TabNav />
       </div>
 

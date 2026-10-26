@@ -10,6 +10,13 @@
 
 ## Clarifications
 
+### Session 2026-10-26 (amendment: official logos, collapsible hero)
+
+- Q: Where should official TEKsystems logos be used? → A: In the header in place of the placeholder "T" mark (symbol only; the "TEKsystems Budapest" text stays), in the hero banner in place of the abstract shapes graphic (full logo), and as the browser favicon. The files come from the public teksystems.com site, as the user chose over waiting for brand-portal files; provenance is recorded in `src/assets/brand/README.md`. The header and hero stay white cards in attract mode, so no light logo variant is needed. See FR-001, FR-010.
+- Q: How does the Ask Assistant chat get more height? → A: The hero banner collapses while a conversation is open, and comes back when it ends. Chosen by the user over shrinking the hero to a slim strip or a full-screen chat. Implemented as a generic shell capability so the shell names no feature. See FR-027.
+- Q: What if attract mode starts while the hero is collapsed? → A: The hero comes back, since it is attract mode's centrepiece. See FR-027.
+- Q: How long before the kiosk turns ambient? → A: **60 seconds, up from 30.** User's words: "The timeout when the app goes back into the idle mode is too short. I think its 30 seconds now, extend it to 60 seconds." This equals the 60-second idle auto-reset, so both now happen together. See FR-023, Assumptions.
+
 ### Session 2026-09-06 (backfilled)
 
 - Attract mode (User Story 5, FR-023–FR-026, SC-010) was implemented directly via prompting rather than through `/speckit-clarify`, and is documented here retroactively by `/speckit-implement` acting on a `/speckit-converge` finding (T068). The requirements below describe the shipped, tested behavior in `src/context/KioskContext.tsx`, `src/hooks/useIdleReset.ts` and `src/components/AmbientAurora/`, not a forward-looking design.
@@ -98,7 +105,7 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 
 1. **Given** the kiosk has just loaded or been power-cycled and has never been touched, **When** it is observed, **Then** it is already showing the ambient attract state (chrome receded, hero enlarged, animated wash visible) — attract is the resting state, not something the kiosk decays into over time.
 2. **Given** the kiosk is in the ambient attract state, **When** a visitor touches or presses any key anywhere, **Then** the kiosk returns to its normal chrome state immediately, and the transition out is faster than the transition in.
-3. **Given** a visitor touched the kiosk and then walked away, **When** ATTRACT_AFTER_SECONDS (default 30s, tunable — shorter than the US3 idle-reset duration so ambience engages while a visitor may still be approaching) elapses with no further interaction, **Then** the kiosk drifts back into the ambient attract state.
+3. **Given** a visitor touched the kiosk and then walked away, **When** ATTRACT_AFTER_SECONDS (default 60s since 2026-10-26, was 30s; tunable) elapses with no further interaction, **Then** the kiosk drifts back into the ambient attract state.
 4. **Given** the kiosk is untouched long enough for the US3 idle auto-reset (FR-019) to fire, **When** the reset completes, **Then** the kiosk remains in the ambient attract state — the auto-reset firing on its own MUST NOT be treated as a visitor interaction and MUST NOT exit attract mode.
 5. **Given** the kiosk is in the ambient attract state, **When** the state is inspected, **Then** the active tab and the language preference are unchanged from before attract engaged — attract is presentation-only and does not disturb US2/US4 state.
 
@@ -115,7 +122,7 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 
 ### Functional Requirements
 
-- **FR-001**: The header MUST display the brand name "TEKsystems Budapest" alongside a status indicator that visibly and continuously pulses to signal the kiosk is live.
+- **FR-001**: The header MUST display the brand name "TEKsystems Budapest" alongside a status indicator that visibly and continuously pulses to signal the kiosk is live. **Amended 2026-10-26**: the brand name is preceded by the official TEKsystems symbol (Clarifications, Session 2026-10-26).
 - **FR-002**: The header MUST display a clock showing the current time, accurate to the second, updating automatically every second without a page reload.
 - **FR-003**: The header MUST display the current date alongside the clock.
 - **FR-004**: The header MUST display local weather for Budapest, showing a temperature value and a condition label.
@@ -124,7 +131,7 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 - **FR-007**: The header, hero banner (including the event pill and welcome headline), navigation tab labels, and footer text MUST render in the currently selected language — Hungarian when HU is selected, English when EN is selected. Per-tab placeholder content in the content region is not required to translate (see FR-014).
 - **FR-008**: The hero banner MUST display a pill-shaped tag naming the current event.
 - **FR-009**: The hero banner MUST display a large welcome headline addressing visiting guests.
-- **FR-010**: The hero banner MUST display a decorative geometric graphic with gentle, continuous motion; this graphic is decorative only and is not an interactive control.
+- **FR-010** **(amended 2026-10-26, was an abstract geometric graphic)**: The hero banner MUST display the official TEKsystems logo with gentle, continuous motion; the logo is decorative only and is not an interactive control. The motion MUST NOT rotate the logo.
 - **FR-011**: The navigation bar MUST display exactly four tabs, in a single line, in this order: Board Agenda, Local Transit, Company Highlights, Guest Wi-Fi — each with an icon and a short text label.
 - **FR-012**: Exactly one navigation tab MUST be marked active at any given time, and the active tab MUST be visually distinct from the three inactive tabs.
 - **FR-013**: Selecting a navigation tab MUST update the content region directly below it inline, in place, with no page navigation and no full-page reload.
@@ -137,10 +144,11 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 - **FR-020**: The entire kiosk shell (header, hero, navigation bar, content region, footer) MUST fit within the fixed kiosk viewport with no vertical scrolling, in every tab state.
 - **FR-021**: All interactive elements in the shell (language toggle, navigation tabs) MUST meet the kiosk's minimum touch target size and minimum spacing between adjacent targets.
 - **FR-022**: The kiosk shell MUST NOT make any network calls in this feature; weather, event, and other displayed values are static/placeholder data for this feature.
-- **FR-023**: The kiosk MUST enter an ambient "attract" display state after ATTRACT_AFTER_SECONDS (default 30, tunable) of no touch or key interaction, and MUST already be in this state from initial load/power-cycle until the first real interaction — attract is the resting state, not a state reached only after prior use.
+- **FR-023**: The kiosk MUST enter an ambient "attract" display state after ATTRACT_AFTER_SECONDS (default 60 since 2026-10-26, was 30; tunable) of no touch or key interaction, and MUST already be in this state from initial load/power-cycle until the first real interaction — attract is the resting state, not a state reached only after prior use.
 - **FR-024**: While in attract mode, the header, navigation bar, content region and footer chrome MUST visually recede and the hero banner MUST enlarge, with an animated ambient background wash, while the shell continues to satisfy FR-020 (no scrolling) in both the attract and normal states.
 - **FR-025**: Any touch or key press anywhere on the kiosk MUST immediately exit attract mode and return the shell to its normal chrome state.
 - **FR-026**: Attract mode MUST persist across an idle auto-reset firing (FR-019) — the auto-reset completing is not a visitor interaction and MUST NOT exit attract mode — and MUST NOT alter the active tab or language preference beyond what FR-019 already specifies.
+- **FR-027** *(new 2026-10-26)*: A feature MAY ask the shell to collapse the hero banner, giving its height to the content region, for as long as that feature shows a view that needs the room. The collapse and its reversal MUST be animated (or instant under reduced motion), MUST leave exactly one standard gap between the header and the navigation bar, MUST end as soon as the requesting view is gone (including on a tab switch or idle auto-reset), and MUST be overridden by attract mode, which shows the hero (FR-024), unless the feature marks its request attract-exempt: then the hero stays collapsed and the content region stays at full opacity through attract mode. FR-020 still holds in every state. Users: the voice assistant conversation (specs/003-voice-info-agent FR-030) and, attract-exempt, the Tic-Tac-Toe game view (specs/004-tic-tac-toe FR-003, FR-020).
 
 ### Key Entities
 
@@ -167,7 +175,7 @@ When no visitor is at the kiosk — including right after a power cycle or page 
 ## Assumptions
 
 - The idle auto-reset countdown starts at 60 seconds, matching the reference mockup's behavior; the exact duration is a tunable value, not a hard product requirement, and can be adjusted later without a spec change.
-- ATTRACT_AFTER_SECONDS (User Story 5) defaults to 30 seconds — deliberately shorter than the 60-second idle auto-reset, so the kiosk becomes an eye-catching ambient display while a visitor may still be approaching, not only after it has given up waiting for one. Like the idle countdown, this is a tunable value, not a hard requirement.
+- ATTRACT_AFTER_SECONDS (User Story 5) defaults to 60 seconds, the same as the idle auto-reset, so the kiosk tidies up and turns ambient at the same moment. **Changed 2026-10-26**: it was 30 seconds (deliberately shorter than the auto-reset, so the kiosk became eye-catching while a visitor might still be approaching), but in use that dimmed the screen while visitors were still reading (Clarifications, Session 2026-10-26). Like the idle countdown, this is a tunable value, not a hard requirement.
 - Weather and event-name values are static placeholder data for this feature, consistent with "no network calls" being out of scope; live data integration (e.g., a weather service, an events calendar) is a future feature.
 - The four navigation tabs explicitly listed in this spec's Navigation bar section (Board Agenda, Local Transit, Company Highlights, Guest Wi-Fi) are the complete scope of this feature's navigation. The reference mockup additionally shows "Campus Map" and "Express Check-In" tabs; those are not part of this feature and are not built here.
 - "Board members" and "client visitors" are treated as a single, undifferentiated visitor persona for this shell — there is no login, identity, or role-based content differentiation in this feature.
