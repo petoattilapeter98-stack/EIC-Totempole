@@ -1,4 +1,4 @@
-import { useReducer } from 'react';
+import { useReducer, type ReactNode } from 'react';
 import { Circle, RotateCcw, X as XIcon } from 'lucide-react';
 
 import { useKiosk } from '../../context/KioskContext';
@@ -15,8 +15,12 @@ import styles from './TicTacToe.module.css';
  * mount starts from EMPTY_BOARD via `useReducer`'s lazy-free initial state, so
  * a fresh Play (or a fresh mount after idle reset) always gets a fresh game —
  * no reset logic needed (research R6).
+ *
+ * `children` render at the end of the side panel, under New game. The caller
+ * puts its Close control there, so this component never needs to know how the
+ * game view is opened or closed.
  */
-export default function GameBoard() {
+export default function GameBoard({ children }: { readonly children?: ReactNode }) {
   const { locale } = useKiosk();
   const s = getGameStrings(locale);
   const [board, dispatch] = useReducer(gameReducer, EMPTY_BOARD);
@@ -78,9 +82,11 @@ export default function GameBoard() {
           className={styles.newGame}
           onClick={() => dispatch({ type: 'newGame' })}
         >
-          <RotateCcw className={styles.newGameIcon} aria-hidden="true" />
+          <RotateCcw className={styles.actionIcon} aria-hidden="true" />
           <span>{s.newGame}</span>
         </button>
+
+        {children}
       </div>
     </div>
   );

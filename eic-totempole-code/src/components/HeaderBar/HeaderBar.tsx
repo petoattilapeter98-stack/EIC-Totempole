@@ -1,5 +1,6 @@
 import { Clock } from 'lucide-react';
 
+import symbolUrl from '../../assets/brand/teksystems-symbol.svg';
 import { useKiosk } from '../../context/KioskContext';
 import { useClock } from '../../hooks/useClock';
 import { LOCALE_TAGS } from '../../i18n/locales';
@@ -35,9 +36,8 @@ export function HeaderBar() {
   return (
     <header className={styles.header}>
       <div className={styles.brand}>
-        <div className={styles.mark} aria-hidden="true">
-          T
-        </div>
+        {/* Decorative: the brand name is the text right beside it. */}
+        <img className={styles.mark} src={symbolUrl} alt="" draggable={false} />
         <div>
           <h1 className={styles.brandName}>
             {s.brandName}

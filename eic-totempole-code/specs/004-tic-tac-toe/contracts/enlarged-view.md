@@ -81,7 +81,7 @@ Exactly these two rules. They name no feature and read only the attributes from 
 | Caller | `attractExempt` | Notes |
 |--------|-----------------|-------|
 | `restaurant-map` expanded state | omitted (false) | `<EnlargedView active={isExpanded}>` wraps the map area **in both display states** (E10). Map dims in attract mode (003 FR-035). Its expand control stays in the map area and renders only in `default`. Its collapse control is now E4's. Keeps `data-display` on its own root for its existing tests. |
-| `tic-tac-toe` game view | `true` | Rendered with `active` only while `enlarged`. Remounting `GameBoard` on each Play is the intended way a game is discarded (research R6), so E10 does not apply to this caller. |
+| ~~`tic-tac-toe` game view~~ | ~~`true`~~ | **Removed 2026-10-26** (spec Clarifications, Session 2026-10-26): the game view now stays in the content region and collapses the Welcome banner with an attract-exempt request (`src/components/HeroBanner/collapseHero.ts`), which keeps FR-020's guarantee. No caller sets `attractExempt` since. Previously: rendered with `active` only while `enlarged`; remounting `GameBoard` on each Play is the intended way a game is discarded (research R6), so E10 did not apply. |
 
 **Map migration obligations**: remove the expanded-panel and collapse-toggle styles from
 `RestaurantMap.module.css`, and remove the `collapseRef` / `'collapse'` branch of `pendingFocus`,

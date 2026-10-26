@@ -34,8 +34,7 @@ type MapStatus = 'loading' | 'ready' | 'failed';
  * path would be redundant machinery (research R6).
  *
  * The expanded state is rendered via the shared `EnlargedView`
- * (specs/004-tic-tac-toe/contracts/enlarged-view.md), which both this tab and
- * the Tic-Tac-Toe game depend on. `EnlargedView` is mounted in BOTH display
+ * (specs/004-tic-tac-toe/contracts/enlarged-view.md). `EnlargedView` is mounted in BOTH display
  * states (its `active` prop toggles what it renders) so that `mapArea`'s
  * children — the iframe above all — are never re-parented and therefore never
  * remount when expanding or collapsing (contract E10). Remounting the iframe
@@ -117,7 +116,7 @@ export default function RestaurantMap() {
       returnLabel={s.collapseLabel}
       onReturn={collapse}
       // No attractExempt: the map dims with the rest of the chrome in both
-      // display states (003 FR-035). Only the Tic-Tac-Toe game view opts out.
+      // display states (003 FR-035).
     >
       {/*
         .mapArea is EnlargedView's CHILD, not something merged onto its panel:

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Mic } from 'lucide-react';
 
 import { useKiosk } from '../../context/KioskContext';
+import { collapseHeroProps } from '../../components/HeroBanner/collapseHero';
 import { accentVars } from '../../components/TabPlaceholder/accent';
 import { meta } from './meta';
 import { getVoiceAssistantStrings } from './strings';
@@ -60,7 +61,11 @@ export function AgentPanel() {
           </button>
         </div>
       ) : (
-        <div className={styles.active}>
+        // The shell collapses the Welcome banner while this element is
+        // mounted, so the transcript gets its height (2026-10-26 amendment).
+        // It reappears on End, on a tab switch and on the idle reset, because
+        // all three unmount this element.
+        <div className={styles.active} {...collapseHeroProps()}>
           <div className={styles.conversationWrap}>
             <VoiceConversation locale={locale} reset={signalActivity} />
           </div>

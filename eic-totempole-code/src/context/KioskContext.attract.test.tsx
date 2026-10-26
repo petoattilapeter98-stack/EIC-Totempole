@@ -132,6 +132,35 @@ describe('attract mode', () => {
     expect(attract()).toBe('true');
   });
 
+  it('with the real defaults, turns ambient at 60s - the same moment the auto-reset fires - and stays ambient', () => {
+    // Since 2026-10-26 ATTRACT_AFTER_SECONDS equals IDLE_TIMEOUT_SECONDS. This
+    // only works because the auto-reset does not count as an interaction: if
+    // it restarted the idle clock, attract would never be reached.
+    render(
+      <KioskProvider>
+        <Probe />
+      </KioskProvider>,
+    );
+
+    act(() => {
+      document.dispatchEvent(new Event('pointerdown'));
+      screen.getByRole('button', { name: 'go wifi' }).click();
+      vi.advanceTimersByTime(250);
+    });
+    expect(attract()).toBe('false');
+
+    act(() => { vi.advanceTimersByTime(58_500); });
+    expect(attract(), 'still crisp just before 60s').toBe('false');
+    expect(screen.getByTestId('tab')).toHaveTextContent('guest-wifi');
+
+    act(() => { vi.advanceTimersByTime(1_500); });
+    expect(attract()).toBe('true');
+    expect(screen.getByTestId('tab')).toHaveTextContent('board-agenda');
+
+    act(() => { vi.advanceTimersByTime(65_000); });
+    expect(attract(), 'still ambient after the next auto-reset').toBe('true');
+  });
+
   it('does not disturb tab or locale state', () => {
     renderProvider();
 

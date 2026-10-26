@@ -84,7 +84,7 @@
   width: 1.5rem;
   height: 1.5rem;
   /* Inherited from the caller via --accent-color (contract E6): emerald for
-     the map, blue for the game. Every other visual property is identical. */
+     the map. */
   color: var(--accent-color);
 }
 

@@ -24,7 +24,9 @@
 
   display: grid;
   grid-template-rows: auto auto auto 1fr auto;
-  gap: var(--space-5);
+  /* Named so the collapsed-hero rules below can take back exactly one gap. */
+  --shell-gap: var(--space-5);
+  gap: var(--shell-gap);
 
   padding: var(--space-8) var(--space-10);
   position: relative;
@@ -114,6 +116,97 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * Collapsed hero
+ *
+ * A feature hands the hero's height to the content row by rendering an element
+ * with `data-collapse-hero` (src/components/HeroBanner/collapseHero.ts). Today
+ * that is the Ask Assistant conversation and the Tic-Tac-Toe game view. Like
+ * the EnlargedView rules further down, this file names no feature - it only
+ * reads the attribute.
+ *
+ * How it collapses: an `auto` row cannot be animated, so `.hero` is a one-row
+ * grid whose track goes 1fr -> 0fr, and `.heroClip` (min-height: 0) shrinks
+ * with it. The emptied row would still leave two shell gaps above the nav, so
+ * the nav pulls up by one gap.
+ *
+ * Unlike attract mode this animates layout, not just transform and opacity.
+ * That is one half-second reflow when a conversation starts or ends, never a
+ * cost at rest. The content row is still the only 1fr row, so the no-scroll
+ * guarantee holds in both states.
+ *
+ * Fade out fast, then shrink; on the way back, grow first, then fade in - so
+ * the banner is never seen squashed. `visibility` flips once the row has
+ * closed, which also takes the hidden headline out of the accessibility tree.
+ *
+ * Attract wins by default: `:not(.attract)` brings the hero back while nobody
+ * is using the kiosk, because it is attract mode's centrepiece. A request with
+ * the value `attract-exempt` holds instead: the hero stays collapsed and the
+ * content row stays at full opacity, so the view does not change at all while
+ * a visitor pauses. Specificity of the opacity rule is 0,3,0, which beats
+ * `.attract .recede` (0,2,0) without `!important`.
+ * ------------------------------------------------------------------------- */
+.hero {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    opacity 0.45s var(--ease-out-expo) 0.15s,
+    transform 0.45s var(--ease-out-expo),
+    grid-template-rows 0.5s var(--ease-out-expo),
+    visibility 0s;
+}
+
+.heroClip {
+  min-height: 0;
+  /* Clips the banner while its row shrinks. The margin leaves room for the
+     banner's drop shadow (--shadow-raised reaches ~56px below the card), which
+     would otherwise be cut off at rest. */
+  overflow: clip;
+  overflow-clip-margin: 4rem;
+}
+
+/* After .recede so this transition list wins for the nav wrapper. */
+.nav {
+  transition:
+    opacity 0.45s var(--ease-out-expo),
+    transform 0.45s var(--ease-out-expo),
+    margin-top 0.5s var(--ease-out-expo);
+}
+
+.shell:not(.attract):has([data-collapse-hero]) .hero,
+.shell:has([data-collapse-hero='attract-exempt']) .hero {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.2s var(--ease-out-expo),
+    transform 0.45s var(--ease-out-expo),
+    grid-template-rows 0.5s var(--ease-out-expo),
+    visibility 0s linear 0.5s;
+}
+
+.shell:not(.attract):has([data-collapse-hero]) .nav,
+.shell:has([data-collapse-hero='attract-exempt']) .nav {
+  margin-top: calc(-1 * var(--shell-gap));
+}
+
+.shell:has([data-collapse-hero='attract-exempt']) .content {
+  opacity: 1;
+}
+
+/* Snap instead of slide. The nav keeps its attract fade. */
+@media (prefers-reduced-motion: reduce) {
+  .hero,
+  .shell:not(.attract):has([data-collapse-hero]) .hero,
+  .shell:has([data-collapse-hero='attract-exempt']) .hero {
+    transition: none;
+  }
+
+  .nav {
+    transition: opacity 0.45s var(--ease-out-expo);
+  }
+}
+
 .content {
   /*
    * REQUIRED. Grid items default to `min-height: auto`, which refuses to shrink
@@ -149,12 +242,15 @@
 /*
  * Attract dims `.content` (this row's <main>, via .recede) directly, and no
  * descendant can undo an ancestor's opacity — so a feature that must stay at
- * full presence while attract is otherwise active (specs/004-tic-tac-toe
- * FR-020: the Tic-Tac-Toe game view, so a tap on the board is never merely
- * "waking" a dimmed screen) needs a rule here, not inside its own module
- * (research R1). Opt-in only, via the same generic attribute pair E10 relies
- * on — this file still names no feature. No `!important`: this selector's
- * specificity (0,4,0) already beats `.attract .recede` (0,2,0).
+ * full presence while attract is otherwise active needs a rule here, not
+ * inside its own module (research R1). Opt-in only, via the same generic
+ * attribute pair E10 relies on — this file still names no feature. No
+ * `!important`: this selector's specificity (0,4,0) already beats
+ * `.attract .recede` (0,2,0).
+ *
+ * No EnlargedView caller sets the exemption since 2026-10-26: the Tic-Tac-Toe
+ * game view, its only user, moved into the content region and now gets the
+ * same guarantee from the attract-exempt hero collapse above.
  */
 .shell:has([data-enlarged-view][data-attract-exempt]) .content {
   opacity: 1;
